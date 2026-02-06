@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__xcodebuild__*",
+      "mcp__XcodeBuildMCP__*",
+      "mcp__apple-docs__*",
+      "mcp__ios-simulator__*",
+      "mcp__simulator__*",
+      "mcp__github__*",
+      "mcp__sequential-thinking__*",
+      "Read",
+      "Write",
+      "Edit",
+      "Bash(*)",
+      "WebFetch",
+      "WebSearch",
+      "Glob",
+      "Grep",
+      "Task",
+      "NotebookEdit"
+    ],
+    "deny": []
+  },
+  "env": {
+    "PROJECT_NAME": "DXWhisp",
+    "DEFAULT_SIMULATOR": "iPhone 17 Pro",
+    "IOS_DEPLOYMENT_TARGET": "26.0"
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // empty' | { read f; [[ -n \"$f\" && \"$f\" == *.swift ]] && swiftlint lint --path \"$f\" --quiet 2>/dev/null; exit 0; }"
+          }
+        ]
+      }
+    ]
+  }
+}

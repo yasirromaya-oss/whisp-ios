@@ -1,0 +1,129 @@
+/* DXWhisp — English (Base) Localizable Strings */
+
+/* Common */
+"common_cancel" = "Cancel";
+"common_delete" = "Delete";
+"common_save" = "Save";
+"common_done" = "Done";
+"common_rename" = "Rename";
+"common_try_again" = "Try again";
+"common_something_went_wrong" = "Something went wrong";
+"common_action_cannot_be_undone" = "This action cannot be undone.";
+
+/* Tabs */
+"tab_notes" = "Notes";
+"tab_record" = "Record";
+"tab_settings" = "Settings";
+
+/* App */
+"app_title" = "DXWhisp";
+"app_voice_note" = "Voice Note";
+"app_authenticate_to_view" = "Authenticate to view this note";
+
+/* Recording */
+"recording_tap_to_start" = "Tap to start recording";
+"recording_tap_to_stop" = "Tap to stop";
+"recording_processing" = "Processing...";
+"recording_transcribing" = "Transcribing your recording...";
+"recording_complete" = "RECORDING COMPLETE";
+"recording_view_note" = "View Note";
+"recording_new_recording" = "New Recording";
+"recording_transcription_failed" = "Transcription Failed";
+"recording_mic_required" = "Microphone access required. Enable it in Settings → DXWhisp.";
+"recording_mic_denied" = "Microphone access denied. Enable it in Settings → DXWhisp → Microphone.";
+
+/* Notes List */
+"notes_list_search_prompt" = "Search notes";
+"notes_list_empty_title" = "No Notes Yet";
+"notes_list_empty_subtitle" = "Record your first voice note to get started";
+"notes_list_favorites" = "Favorites";
+"notes_list_all_notes" = "All Notes";
+"notes_list_no_matching_notes" = "No Matching Notes";
+"notes_list_no_results" = "No Results";
+"notes_list_no_match_tags_and_search" = "No notes match the selected tags and search text.";
+"notes_list_no_match_tags" = "No notes are tagged with the selected filter.\nAssign tags via long press on a note.";
+"notes_list_clear_tag_filter" = "Clear Tag Filter";
+"notes_list_clear" = "Clear";
+"notes_list_select_all" = "Select All";
+"notes_list_deselect_all" = "Deselect All";
+"notes_list_lock" = "Lock";
+"notes_list_delete_all" = "Delete All";
+"notes_list_add_to_favorites" = "Add to Favorites";
+"notes_list_remove_from_favorites" = "Remove from Favorites";
+"notes_list_tags" = "Tags";
+"notes_list_tag" = "Tag";
+"notes_list_edit_tag" = "Edit Tag";
+"notes_list_delete_tag" = "Delete Tag";
+"notes_list_rename_note" = "Rename Note";
+"notes_list_note_title" = "Note title";
+"notes_list_load_failed" = "We couldn't load your notes. Pull down to try again.";
+"notes_list_delete_failed" = "We couldn't delete that note. Please try again.";
+"notes_list_update_failed" = "We couldn't update that note. Please try again.";
+"notes_list_rename_failed" = "We couldn't rename that note. Please try again.";
+"notes_list_tag_update_failed" = "Tag update failed.";
+"notes_list_tag_delete_failed" = "Failed to delete tag.";
+"notes_list_tag_save_failed" = "Failed to save tag.";
+"notes_list_delete_all_confirm_message" = "This will permanently delete all your notes and recordings.";
+
+/* Note Detail */
+"note_detail_delete_note" = "Delete Note?";
+"note_detail_lock_note" = "Lock Note";
+"note_detail_unlock_note" = "Unlock Note";
+"note_detail_share" = "Share";
+"note_detail_note_locked" = "This note is locked";
+"note_detail_authenticate" = "Authenticate";
+"note_detail_re_extracting" = "Re-extracting insights...";
+"note_detail_transcription" = "Transcription";
+"note_detail_summary" = "Summary";
+"note_detail_action_items" = "Action Items";
+"note_detail_dates_and_events" = "Dates & Events";
+"note_detail_key_points" = "Key Points";
+"note_detail_events" = "Events";
+"note_detail_reminders" = "Reminders";
+"note_detail_calendar" = "Calendar";
+"note_detail_save_failed" = "We couldn't save that change. Please try again.";
+"note_detail_delete_failed" = "We couldn't delete this note. Please try again.";
+"note_detail_export_reminders_failed" = "We couldn't add that to Reminders. Check that Reminders is allowed in Settings → DXWhisp and try again.";
+"note_detail_export_calendar_failed" = "We couldn't add that to Calendar. Check that Calendar is allowed in Settings → DXWhisp and try again.";
+"note_detail_auth_failed" = "Authentication was not successful.";
+"note_detail_lock_failed" = "We couldn't update the lock. Please try again.";
+
+/* Settings */
+"settings_integrations" = "INTEGRATIONS";
+"settings_about" = "ABOUT";
+"settings_auto_export_action_items" = "Auto-Export Action Items";
+"settings_auto_export_events" = "Auto-Export Events";
+"settings_developer" = "Developer";
+"settings_privacy_policy" = "Privacy Policy";
+"settings_terms_of_service" = "Terms of Service";
+
+/* Integrations */
+"integrations_title" = "Integrations";
+"integrations_reminders" = "REMINDERS";
+"integrations_calendar" = "CALENDAR";
+"integrations_auto_export_action_items" = "Auto-Export Action Items";
+"integrations_auto_export_action_items_subtitle" = "Automatically export action items to Reminders";
+"integrations_auto_export_events" = "Auto-Export Events";
+"integrations_auto_export_events_subtitle" = "Automatically export events to Calendar";
+
+/* Tag Editor */
+"tag_editor_new_tag" = "New Tag";
+"tag_editor_edit_tag" = "Edit Tag";
+"tag_editor_tag_name" = "Tag Name";
+"tag_editor_enter_tag_name" = "Enter tag name";
+"tag_editor_preview" = "Preview";
+"tag_editor_name" = "NAME";
+"tag_editor_color" = "COLOR";
+
+/* Onboarding */
+"onboarding_get_started" = "Get Started";
+"onboarding_continue" = "Continue";
+"onboarding_skip" = "Skip";
+"onboarding_record_anything_title" = "Record Anything";
+"onboarding_record_anything_subtitle" = "Capture meetings, ideas, or random thoughts. Watch your voice come alive with a real-time waveform.";
+"onboarding_speaker_detection_title" = "Know Who Said What";
+"onboarding_speaker_detection_subtitle" = "Transcription with speaker detection. DXWhisp identifies turns in conversation so you never lose track.";
+"onboarding_insights_title" = "Never Miss a Thing";
+"onboarding_insights_subtitle" = "Action items go to Reminders. Dates go to Calendar. Key points are summarized. Automatically.";
+"onboarding_security_title" = "Private & Secure";
+"onboarding_security_subtitle" = "Your voice notes are encrypted and protected with Face ID. Your data, your control.";

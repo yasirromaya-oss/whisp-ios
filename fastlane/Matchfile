@@ -1,0 +1,6 @@
+git_url("https://github.com/yasirromaya-oss/certificates.git")
+storage_mode("git")
+type("appstore")
+app_identifier(["me.yasirromaya.whisp"])
+team_id("9W4STM7DA3")
+shallow_clone(true)

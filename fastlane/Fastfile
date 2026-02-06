@@ -1,0 +1,301 @@
+default_platform(:ios)
+
+# ── Constants ──────────────────────────────────────────────────────
+SCHEME        = "DXWhisp"
+PROJECT       = "DXWhisp.xcodeproj"
+APP_ID        = "me.yasirromaya.whisp"
+TEAM_ID       = "9W4STM7DA3"
+PROFILE_NAME  = "match AppStore #{APP_ID}"
+TEST_DEVICE   = "iPhone 17 Pro"
+SPM_CACHE     = "SPMCache"
+MACRO_XCARGS  = "-skipPackagePluginValidation -skipMacroValidation ENABLE_APP_INTENTS_METADATA_EXTRACTION=NO"
+
+# ── Patch: add missing devices to snapshot HTML report ────────────
+# fastlane 2.231 hardcodes device names up to iPhone 15 / iPad Pro 6th gen.
+# Devices not in the map are silently dropped from screenshots.html.
+# This prepends iOS 26-era devices so the HTML includes all screenshots.
+# Guard: only patch if snapshot gem is loadable and the class exists.
+begin
+  require 'snapshot'
+  if defined?(Snapshot::ReportsGenerator)
+    module Snapshot
+      class ReportsGenerator
+        NEW_DEVICES = {
+          'iPhone 17 Pro Max' => 'iPhone 17 Pro Max',
+          'iPhone 17 Pro' => 'iPhone 17 Pro',
+          'iPhone 17' => 'iPhone 17',
+          'iPhone 16e' => 'iPhone 16e',
+          'iPhone 16 Pro Max' => 'iPhone 16 Pro Max',
+          'iPhone 16 Pro' => 'iPhone 16 Pro',
+          'iPhone 16 Plus' => 'iPhone 16 Plus',
+          'iPhone 16' => 'iPhone 16',
+          'iPad Pro 13-inch (M5)' => 'iPad Pro 13-inch (M5)',
+          'iPad Pro 11-inch (M5)' => 'iPad Pro 11-inch (M5)',
+          'iPad Air 13-inch (M4)' => 'iPad Air 13-inch (M4)',
+          'iPad Air 11-inch (M4)' => 'iPad Air 11-inch (M4)',
+        }.freeze
+
+        if method_defined?(:available_devices)
+          alias_method :_original_available_devices, :available_devices
+          def available_devices
+            NEW_DEVICES.merge(_original_available_devices)
+          end
+        else
+          def available_devices
+            NEW_DEVICES
+          end
+        end
+      end
+    end
+  end
+rescue LoadError
+  # snapshot gem not available — skip patch (not needed for build/test lanes)
+end
+
+# ── Helpers ────────────────────────────────────────────────────────
+
+def api_key
+  app_store_connect_api_key(
+    key_id: ENV["ASC_KEY_ID"],
+    issuer_id: ENV["ASC_ISSUER_ID"],
+    key_content: ENV["ASC_KEY_CONTENT"],
+    is_key_content_base64: true,
+    duration: 1200,
+    in_house: false
+  )
+end
+
+platform :ios do
+  # ── Private Lanes ────────────────────────────────────────────────
+
+  private_lane :setup_signing do
+    setup_ci
+    match(
+      type: "appstore",
+      api_key: api_key,
+      readonly: true
+    )
+  end
+
+  private_lane :resolve_packages do
+    sh(
+      "xcodebuild -resolvePackageDependencies " \
+      "-scheme #{SCHEME} " \
+      "-project ../#{PROJECT} " \
+      "-clonedSourcePackagesDirPath ../#{SPM_CACHE}"
+    )
+  end
+
+  # ── CI Lanes ─────────────────────────────────────────────────────
+
+  desc "CI: run unit tests on simulator (no signing)"
+  lane :ci_test do
+    resolve_packages
+    run_tests(
+      scheme: SCHEME,
+      devices: [TEST_DEVICE],
+      skip_testing: ["DXWhispUITests"],
+      result_bundle: true,
+      cloned_source_packages_path: SPM_CACHE,
+      xcargs: "#{MACRO_XCARGS} CODE_SIGNING_ALLOWED=NO"
+    )
+  end
+
+  desc "CI: run UI tests on simulator (no signing)"
+  lane :ci_ui_test do
+    resolve_packages
+    run_tests(
+      scheme: SCHEME,
+      devices: [TEST_DEVICE],
+      only_testing: ["DXWhispUITests"],
+      result_bundle: true,
+      cloned_source_packages_path: SPM_CACHE,
+      xcargs: "#{MACRO_XCARGS} CODE_SIGNING_ALLOWED=NO"
+    )
+  end
+
+  desc "CI: build for simulator (no signing)"
+  lane :ci_build do
+    resolve_packages
+    build_app(
+      scheme: SCHEME,
+      destination: "generic/platform=iOS Simulator",
+      configuration: "Debug",
+      clean: false,
+      skip_archive: true,
+      cloned_source_packages_path: SPM_CACHE,
+      xcargs: "#{MACRO_XCARGS} CODE_SIGNING_ALLOWED=NO"
+    )
+  end
+
+  # ── Code Signing ─────────────────────────────────────────────────
+
+  desc "Sync App Store certificates and profiles (readonly in CI)"
+  lane :certificates do
+    match(type: "appstore", api_key: api_key, readonly: is_ci)
+  end
+
+  desc "Sync development certificates (local only)"
+  lane :certificates_dev do
+    match(type: "development", api_key: api_key)
+  end
+
+  desc "Force-renew App Store certificates (local only)"
+  lane :certificates_refresh do
+    match(type: "appstore", api_key: api_key, force_for_new_devices: true, readonly: false)
+  end
+
+  # ── Build & Test ─────────────────────────────────────────────────
+
+  desc "Build IPA for App Store"
+  lane :build do
+    certificates
+    resolve_packages
+
+    profile = lane_context.dig(:MATCH_PROVISIONING_PROFILE_MAPPING, APP_ID) || PROFILE_NAME
+
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path: PROJECT,
+      team_id: TEAM_ID,
+      profile_name: profile,
+      code_sign_identity: "iPhone Distribution"
+    )
+
+    build_app(
+      scheme: SCHEME,
+      destination: "generic/platform=iOS",
+      clean: false,
+      export_method: "app-store",
+      output_directory: "./build",
+      output_name: "DXWhisp.ipa",
+      cloned_source_packages_path: SPM_CACHE,
+      xcargs: MACRO_XCARGS,
+      export_options: {
+        provisioningProfiles: { APP_ID => profile }
+      }
+    )
+  end
+
+  desc "Run unit tests"
+  lane :test do
+    resolve_packages
+    run_tests(
+      scheme: SCHEME,
+      devices: [TEST_DEVICE],
+      result_bundle: true,
+      cloned_source_packages_path: SPM_CACHE,
+      xcargs: MACRO_XCARGS
+    )
+  end
+
+  # ── Screenshots ─────────────────────────────────────────────────
+
+  desc "Capture App Store screenshots (dark mode, all devices)"
+  lane :screenshots do
+    capture_screenshots
+  end
+
+  desc "Frame raw screenshots with branded backgrounds and headlines (overwrites in place)"
+  lane :whisp_frame do
+    tool_dir = File.expand_path("../tools/screenshot-framer", __dir__)
+    sh("cd '#{tool_dir}' && swift build -c release --quiet")
+    binary = File.join(tool_dir, ".build/release/WhispScreenshotFramer")
+    screenshot_dir = File.expand_path("screenshots/en-US", __dir__)
+    sh("'#{binary}' --input-dir '#{screenshot_dir}'")
+  end
+
+  desc "Capture screenshots then frame them for App Store"
+  lane :screenshots_and_frame do
+    capture_screenshots
+    whisp_frame
+  end
+
+  # ── Distribution ─────────────────────────────────────────────────
+
+  desc "Upload metadata and screenshots (no binary)"
+  lane :metadata do
+    deliver(
+      api_key: api_key,
+      skip_binary_upload: true,
+      skip_screenshots: false,
+      overwrite_screenshots: true,
+      submit_for_review: false,
+      force: true,
+      precheck_include_in_app_purchases: false
+    )
+  end
+
+  desc "Build and upload to TestFlight"
+  lane :beta do
+    setup_signing
+    increment_build_number(
+      build_number: latest_testflight_build_number(api_key: api_key) + 1
+    )
+    resolve_packages
+    build_app(
+      scheme: SCHEME,
+      destination: "generic/platform=iOS",
+      clean: false,
+      export_method: "app-store",
+      output_directory: "./build",
+      output_name: "DXWhisp.ipa",
+      cloned_source_packages_path: SPM_CACHE,
+      xcargs: MACRO_XCARGS,
+      export_options: {
+        provisioningProfiles: {
+          APP_ID => lane_context.dig(:MATCH_PROVISIONING_PROFILE_MAPPING, APP_ID) || PROFILE_NAME
+        }
+      }
+    )
+    upload_to_testflight(api_key: api_key, skip_waiting_for_build_processing: true)
+  end
+
+  desc "Full release: build and submit for App Store review (screenshots always uploaded)"
+  lane :release do
+    setup_signing
+    increment_build_number(
+      build_number: latest_testflight_build_number(api_key: api_key) + 1
+    )
+    resolve_packages
+    build_app(
+      scheme: SCHEME,
+      destination: "generic/platform=iOS",
+      clean: false,
+      export_method: "app-store",
+      output_directory: "./build",
+      output_name: "DXWhisp.ipa",
+      cloned_source_packages_path: SPM_CACHE,
+      xcargs: MACRO_XCARGS,
+      export_options: {
+        provisioningProfiles: {
+          APP_ID => lane_context.dig(:MATCH_PROVISIONING_PROFILE_MAPPING, APP_ID) || PROFILE_NAME
+        }
+      }
+    )
+    deliver(
+      api_key: api_key,
+      submit_for_review: true,
+      automatic_release: true,
+      skip_screenshots: false,
+      overwrite_screenshots: true,
+      force: true,
+      precheck_include_in_app_purchases: false,
+      submission_information: {
+        export_compliance_uses_encryption: false,
+        content_rights_contains_third_party_content: false,
+        content_rights_has_rights: true
+      }
+    )
+  end
+
+  # ── Versioning ───────────────────────────────────────────────────
+
+  desc "Bump version (type: patch|minor|major)"
+  lane :bump do |options|
+    type = options[:type] || "patch"
+    increment_version_number(bump_type: type)
+    increment_build_number
+    commit_version_bump(message: "Bump version")
+  end
+end

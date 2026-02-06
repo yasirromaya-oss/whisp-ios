@@ -1,0 +1,12 @@
+What's New in v2.0.0:
+
+- Tags & filtering: Organize notes with colored tags and filter your library
+- Bulk operations: Select multiple notes for batch delete, favorite, or lock
+- Transcript editing: Edit transcriptions and re-extract insights without losing completed action items or exported events
+- Biometric lock: Secure sensitive notes with Face ID, Touch ID, or Optic ID
+- Guided onboarding: A new multi-page intro walks you through permissions and features
+- Improved recording animation: A new live animation responds to your voice while recording
+- Auto-export: Automatically send action items to Reminders and events to Calendar after recording
+- iOS 26 optimized: Built for the latest platform with on-device AI insights
+
+We'd love to hear your feedback!

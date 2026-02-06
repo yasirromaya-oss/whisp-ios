@@ -1,0 +1,5 @@
+/* DXWhispUI Localizable Strings — English (Base) */
+
+/* UI Components */
+"ui_ok" = "OK";
+"ui_voice_note" = "Voice Note";

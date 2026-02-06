@@ -1,0 +1,34 @@
+# Snapfile — Screenshot Configuration
+# Run: `fastlane screenshots`
+
+# ── iOS Version (auto-detect latest available) ───────────────────
+require 'json'
+raw = `xcrun simctl list runtimes iOS available -j 2>/dev/null`
+best = JSON.parse(raw)["runtimes"]
+  .select { |r| r["name"].start_with?("iOS") && r["isAvailable"] }
+  .max_by { |r| Gem::Version.new(r["version"]) }
+ios_version(best["version"]) if best
+
+# ── App Store Connect required display sizes (iOS 26+) ───────────
+#   6.9"  iPhone 17 Pro Max  — mandatory
+#   6.3"  iPhone 17 Pro      — optional (auto-scales from 6.9")
+#   6.3"  iPhone 16e         — smallest iPhone on iOS 26
+#   13"   iPad Pro M5        — mandatory (universal app)
+devices([
+  "iPhone 17 Pro Max",
+  "iPhone 17 Pro",
+  "iPhone 16e",
+  "iPad Pro 13-inch (M5)"
+])
+
+# ── Configuration ────────────────────────────────────────────────
+languages(["en-US"])
+scheme("DXWhisp")
+output_directory("./fastlane/screenshots")
+only_testing(["DXWhispUITests"])
+xcargs("-skipPackagePluginValidation -skipMacroValidation ENABLE_APP_INTENTS_METADATA_EXTRACTION=NO")
+
+# ── Options ──────────────────────────────────────────────────────
+clear_previous_screenshots(true)
+localize_simulator(true)
+output_simulator_logs(true)

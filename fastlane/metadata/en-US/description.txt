@@ -1,0 +1,36 @@
+DXWhisp transforms your voice into action. Record meetings, ideas, or quick thoughts — and let AI do the heavy lifting.
+
+■ SMART TRANSCRIPTION
+Your recordings are automatically transcribed using Apple's speech recognition — fast and accurate. Edit transcriptions in-app and re-extract insights without losing your progress.
+
+■ SPEAKER DETECTION
+DXWhisp detects speaker turns in conversations, labeling who said what with up to 6 speakers. Perfect for meetings and interviews.
+
+■ AI-POWERED INSIGHTS
+Action items, dates, events, and key points are extracted automatically using Natural Language Processing, enhanced by on-device AI.
+- Action items → Reminders
+- Dates & events → Calendar
+- Key points → Summary
+
+■ SEAMLESS INTEGRATION
+Export action items directly to Apple Reminders and events to Apple Calendar. Enable auto-export in Settings and everything happens automatically when you finish recording.
+
+■ TAGS & ORGANIZATION
+Organize notes with colored tags, filter by tag or search by text, favorite important notes, and use bulk operations to manage multiple notes at once.
+
+■ PRIVATE & SECURE
+Your voice notes are protected with complete file encryption. Lock sensitive notes behind Face ID, Touch ID, or Optic ID — biometric authentication keeps your data safe.
+
+■ BEAUTIFUL & SIMPLE
+A clean, minimal interface with a guided onboarding experience. A live animation responds to your voice while recording, making the experience feel alive.
+
+Perfect for:
+- Meeting notes with speaker attribution
+- Lecture recordings
+- Quick ideas and brainstorms
+- Voice journaling
+- Interview transcripts
+
+DXWhisp requires iOS 26 or later.
+
+Questions? Contact us at yasir.romaya@gmail.com

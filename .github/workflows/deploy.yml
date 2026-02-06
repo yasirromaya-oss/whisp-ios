@@ -1,0 +1,92 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      destination:
+        description: 'Deploy destination'
+        required: true
+        default: 'testflight'
+        type: choice
+        options:
+          - testflight
+          - appstore
+
+env:
+  DEVELOPER_DIR: /Applications/Xcode_26.2.app/Contents/Developer
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    name: Deploy to ${{ github.event.inputs.destination || 'TestFlight' }}
+    runs-on: macos-26
+    environment: ${{ github.event.inputs.destination == 'appstore' && 'production' || 'staging' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: Cache SPM packages
+        uses: actions/cache@v4
+        with:
+          path: SPMCache
+          key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-
+
+      - name: Set deploy lane
+        id: destination
+        run: |
+          dest="${{ github.event.inputs.destination }}"
+          if [ "$dest" = "testflight" ]; then
+            echo "lane=beta" >> $GITHUB_OUTPUT
+            echo "name=TestFlight" >> $GITHUB_OUTPUT
+          else
+            echo "lane=release" >> $GITHUB_OUTPUT
+            echo "name=App Store" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build & Deploy
+        env:
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: bundle exec fastlane ${{ steps.destination.outputs.lane }}
+
+      - name: Get app version
+        if: success()
+        id: version
+        run: |
+          version=$(sed -n 's/.*MARKETING_VERSION = \(.*\);/\1/p' DXWhisp.xcodeproj/project.pbxproj | head -1 | xargs)
+          build=$(sed -n 's/.*CURRENT_PROJECT_VERSION = \(.*\);/\1/p' DXWhisp.xcodeproj/project.pbxproj | head -1 | xargs)
+          echo "tag=v${version}-${build}" >> $GITHUB_OUTPUT
+          echo "name=v${version} (${build})" >> $GITHUB_OUTPUT
+
+      - name: Upload IPA
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DXWhisp-${{ steps.version.outputs.tag }}
+          path: build/DXWhisp.ipa
+          retention-days: 30
+
+      - name: Create GitHub Release
+        if: success()
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.name }} — ${{ steps.destination.outputs.name }}
+          files: build/DXWhisp.ipa
+          generate_release_notes: true

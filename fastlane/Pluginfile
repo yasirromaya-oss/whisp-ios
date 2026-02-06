@@ -1,0 +1,2 @@
+# Fastlane Plugins
+gem "fastlane-plugin-versioning"

@@ -1,0 +1,106 @@
+# SwiftLint configuration for DXWhisp
+
+# Paths to include (Tests added when test target exists)
+included:
+  - DXWhisp
+  - Packages
+
+# Paths to exclude
+excluded:
+  - .build
+  - "**/.build"
+  - Package.swift
+  - Packages/DXWhispKit/.build
+  - Packages/DXWhispUI/.build
+  - SPMCache
+
+# Enabled rules
+opt_in_rules:
+  - array_init
+  - closure_end_indentation
+  - closure_spacing
+  - collection_alignment
+  - contains_over_filter_count
+  - contains_over_filter_is_empty
+  - contains_over_first_not_nil
+  - empty_collection_literal
+  - empty_count
+  - empty_string
+  - enum_case_associated_values_count
+  - explicit_init
+  - fatal_error_message
+  - first_where
+  - flatmap_over_map_reduce
+  - identical_operands
+  - implicitly_unwrapped_optional
+  - joined_default_parameter
+  - last_where
+  - legacy_multiple
+  - literal_expression_end_indentation
+  - operator_usage_whitespace
+  - overridden_super_call
+  - prefer_self_type_over_type_of_self
+  - prefer_zero_over_explicit_init
+  - private_action
+  - private_outlet
+  - prohibited_super_call
+  - reduce_into
+  - redundant_nil_coalescing
+  - redundant_type_annotation
+  - sorted_first_last
+  - toggle_bool
+  - unneeded_parentheses_in_closure_argument
+  - vertical_parameter_alignment_on_call
+  - yoda_condition
+
+# Disabled rules
+disabled_rules:
+  - line_length
+  - type_body_length
+  - file_length
+  - function_body_length
+  - todo
+  - trailing_comma
+  - modifier_order
+
+# Rule configurations
+identifier_name:
+  min_length: 1
+  max_length: 60
+  excluded:
+    - id
+    - x
+    - y
+    - i
+    - j
+    - ok
+
+type_name:
+  min_length: 2
+  max_length: 50
+
+nesting:
+  type_level: 3
+  function_level: 3
+
+function_parameter_count:
+  warning: 8
+  error: 10
+
+large_tuple:
+  warning: 4
+  error: 5
+
+cyclomatic_complexity:
+  warning: 15
+  error: 25
+
+# Custom rules
+custom_rules:
+  no_print:
+    name: "No print statements"
+    regex: "\\bprint\\s*\\("
+    message: "Use os_log or Logger instead of print in production code"
+    severity: warning
+    match_kinds:
+      - identifier

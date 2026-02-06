@@ -1,0 +1,16 @@
+app_identifier("me.yasirromaya.whisp")
+metadata_path("./fastlane/metadata")
+screenshots_path("./fastlane/screenshots")
+app_rating_config_path("./fastlane/rating_config.json")
+
+submit_for_review(true)
+automatic_release(false)
+phased_release(true)
+
+app_review_information(
+  first_name: "Yasir",
+  last_name: "Romaya",
+  phone_number: "+491602722971",
+  email_address: "yasir.romaya@gmail.com",
+  notes: "No login required. Grant microphone permission when prompted."
+)

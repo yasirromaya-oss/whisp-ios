@@ -1,0 +1,89 @@
+# Xcode
+*.xcuserdata/
+*.xcworkspace/
+!*.xcworkspace/contents.xcworkspacedata
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+DerivedData/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+timeline.xctimeline
+playground.xcworkspace
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+SPMCache/
+
+# CocoaPods (if ever used)
+Pods/
+
+# Carthage (if ever used)
+Carthage/Build/
+Carthage/Checkouts/
+
+# OS
+.DS_Store
+*.swp
+*~
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# VS Code
+.vscode/
+
+# Secrets
+*.xcconfig
+!*.template.xcconfig
+Secrets/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/test_output
+
+# Code coverage
+*.gcno
+*.gcda
+coverage/
+
+# Instrumentation
+*.profraw
+*.profdata
+fastlane/keys/*.p8
+
+# Build artifacts
+build/
+*.ipa
+*.app
+*.xcarchive
+
+# Tuist (if ever used)
+Derived/
+
+# Mint
+.mint/
+
+# Ruby
+.ruby-version
+vendor/bundle/
+.bundle/
+
+# Environment
+.env
+.env.local
+*.local.xcconfig
+
+# Screenshot framer tool
+tools/screenshot-framer/.build/
+tools/screenshot-framer/.swiftpm/
+
+# Claude Code (local overrides)
+.claude/settings.local.json

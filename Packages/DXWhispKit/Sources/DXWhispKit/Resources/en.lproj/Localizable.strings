@@ -1,0 +1,11 @@
+/* DXWhispKit Localizable Strings — English (Base) */
+
+/* Transcription Client — Speaker Labels */
+"Speaker %lld" = "Speaker %lld";
+
+/* Transcription Errors */
+"kit_error_unauthorized" = "Speech recognition permission needed. Please allow access when prompted.";
+"kit_error_denied" = "Speech recognition denied. Enable it in Settings → DXWhisp.";
+"kit_error_restricted" = "Speech recognition restricted on this device.";
+"kit_error_unavailable" = "Transcription unavailable. Use a real iPhone or iPad.";
+"kit_error_no_result" = "No transcription result. Try speaking more clearly.";
