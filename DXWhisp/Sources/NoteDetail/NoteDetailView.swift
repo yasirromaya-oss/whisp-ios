@@ -43,7 +43,9 @@ public struct NoteDetailView: View {
                                 store.send(.toggleLock)
                             } label: {
                                 Label(
-                                    store.note.isLocked ? L10n.NoteDetail.unlockNote : L10n.NoteDetail.lockNote,
+                                    store.note.isLocked
+                                        ? L10n.NoteDetail.unlockNote
+                                        : "\(L10n.NoteDetail.lockNote)\(!store.isPro && !store.note.isLocked ? " (\(L10n.Subscription.pro))" : "")",
                                     systemImage: store.note.isLocked ? "lock.open" : "lock"
                                 )
                             }

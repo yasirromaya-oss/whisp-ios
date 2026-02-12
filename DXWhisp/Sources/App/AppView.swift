@@ -39,6 +39,7 @@ public struct AppView: View {
             .tag(AppFeature.State.Tab.settings)
         }
         .animation(.spring(response: 0.35, dampingFraction: 0.85), value: store.tab)
+        .task { store.send(.checkSubscriptionStatus) }
         .onAppear {
             configureTabBarAppearance()
         }
@@ -53,6 +54,16 @@ public struct AppView: View {
                         }
                     }
             }
+        }
+        .sheet(item: $store.scope(state: \.paywall, action: \.paywall)) { paywallStore in
+            NavigationStack {
+                PaywallView(store: paywallStore)
+                    .navigationTitle(L10n.Subscription.unlockPro)
+                    #if os(iOS)
+                    .navigationBarTitleDisplayMode(.inline)
+                    #endif
+            }
+            .presentationDetents([.large])
         }
         .overlay {
             if let message = store.error {

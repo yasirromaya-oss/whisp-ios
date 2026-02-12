@@ -250,7 +250,9 @@ struct NoteDetailFavoriteTests {
 struct NoteDetailExportTests {
     @Test func exportToRemindersSucceeds() async {
         let item = testNote.insights!.actionItems[0]
-        let store = TestStore(initialState: NoteDetailFeature.State(note: testNote)) {
+        var state = NoteDetailFeature.State(note: testNote)
+        state.isPro = true
+        let store = TestStore(initialState: state) {
             NoteDetailFeature()
         } withDependencies: {
             $0.eventKit.requestRemindersAccess = { true }
@@ -271,7 +273,9 @@ struct NoteDetailExportTests {
 
     @Test func exportToRemindersFails() async {
         let item = testNote.insights!.actionItems[0]
-        let store = TestStore(initialState: NoteDetailFeature.State(note: testNote)) {
+        var state = NoteDetailFeature.State(note: testNote)
+        state.isPro = true
+        let store = TestStore(initialState: state) {
             NoteDetailFeature()
         } withDependencies: {
             $0.eventKit.requestRemindersAccess = { true }
@@ -295,7 +299,9 @@ struct NoteDetailExportTests {
 
     @Test func exportToCalendarSucceeds() async {
         let event = testNote.insights!.events[0]
-        let store = TestStore(initialState: NoteDetailFeature.State(note: testNote)) {
+        var state = NoteDetailFeature.State(note: testNote)
+        state.isPro = true
+        let store = TestStore(initialState: state) {
             NoteDetailFeature()
         } withDependencies: {
             $0.eventKit.requestCalendarAccess = { true }
@@ -317,7 +323,9 @@ struct NoteDetailExportTests {
 
     @Test func exportToCalendarFails() async {
         let event = testNote.insights!.events[0]
-        let store = TestStore(initialState: NoteDetailFeature.State(note: testNote)) {
+        var state = NoteDetailFeature.State(note: testNote)
+        state.isPro = true
+        let store = TestStore(initialState: state) {
             NoteDetailFeature()
         } withDependencies: {
             $0.eventKit.requestCalendarAccess = { true }
@@ -449,7 +457,9 @@ struct NoteDetailBiometricTests {
     }
 
     @Test func toggleLockLocksNote() async {
-        let store = TestStore(initialState: NoteDetailFeature.State(note: testNote)) {
+        var state = NoteDetailFeature.State(note: testNote)
+        state.isPro = true
+        let store = TestStore(initialState: state) {
             NoteDetailFeature()
         } withDependencies: {
             $0.persistence.updateNote = { _ in }
@@ -475,7 +485,9 @@ struct NoteDetailBiometricTests {
     }
 
     @Test func toggleLockFailedRevertsLockState() async {
-        let store = TestStore(initialState: NoteDetailFeature.State(note: testNote)) {
+        var state = NoteDetailFeature.State(note: testNote)
+        state.isPro = true
+        let store = TestStore(initialState: state) {
             NoteDetailFeature()
         } withDependencies: {
             $0.persistence.updateNote = { _ in throw NSError(domain: "test", code: 1) }
@@ -851,6 +863,58 @@ struct NoteDetailMergePreservationTests {
             $0.note.insights = newInsights
         }
         await store.receive(\.delegate.noteUpdated)
+    }
+}
+
+// MARK: - Subscription Gates
+
+@MainActor
+struct NoteDetailSubscriptionGateTests {
+    @Test func toggleLockFreeUserShowsPaywall() async {
+        var state = NoteDetailFeature.State(note: testNote)
+        state.isPro = false
+        let store = TestStore(initialState: state) {
+            NoteDetailFeature()
+        }
+        await store.send(.toggleLock)
+        await store.receive(\.delegate.paywallRequested)
+    }
+
+    @Test func toggleLockFreeUserCanUnlock() async {
+        var state = NoteDetailFeature.State(note: lockedNote)
+        state.isPro = false
+        let store = TestStore(initialState: state) {
+            NoteDetailFeature()
+        } withDependencies: {
+            $0.persistence.updateNote = { _ in }
+        }
+        await store.send(.toggleLock) {
+            $0.note.isLocked = false
+            $0.isAuthenticated = true
+        }
+        await store.receive(\.delegate.noteUpdated)
+    }
+
+    @Test func exportToRemindersFreeUserShowsPaywall() async {
+        let item = testNote.insights!.actionItems[0]
+        var state = NoteDetailFeature.State(note: testNote)
+        state.isPro = false
+        let store = TestStore(initialState: state) {
+            NoteDetailFeature()
+        }
+        await store.send(.exportToReminders(item))
+        await store.receive(\.delegate.paywallRequested)
+    }
+
+    @Test func exportToCalendarFreeUserShowsPaywall() async {
+        let event = testNote.insights!.events[0]
+        var state = NoteDetailFeature.State(note: testNote)
+        state.isPro = false
+        let store = TestStore(initialState: state) {
+            NoteDetailFeature()
+        }
+        await store.send(.exportToCalendar(event))
+        await store.receive(\.delegate.paywallRequested)
     }
 }
 

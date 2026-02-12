@@ -538,6 +538,7 @@ struct NotesListFeatureTests {
     @Test func toggleLock() async {
         var state = NotesListFeature.State()
         state.notes = [note1]
+        state.isPro = true
         state.recomputeFilteredNotes()
         let store = TestStore(initialState: state) {
             NotesListFeature()
@@ -553,6 +554,7 @@ struct NotesListFeatureTests {
     @Test func toggleLockFailedRevertsState() async {
         var state = NotesListFeature.State()
         state.notes = [note1]
+        state.isPro = true
         state.recomputeFilteredNotes()
         let store = TestStore(initialState: state) {
             NotesListFeature()
@@ -573,6 +575,7 @@ struct NotesListFeatureTests {
     @Test func lockSelected() async {
         var state = NotesListFeature.State()
         state.notes = [note1, note2]
+        state.isPro = true
         state.recomputeFilteredNotes()
         state.isEditing = true
         state.selectedNoteIDs = [note1.id, note2.id]
@@ -616,6 +619,7 @@ struct NotesListFeatureTests {
     @Test func lockSelectedPartialFailure() async {
         var state = NotesListFeature.State()
         state.notes = [note1, note2]
+        state.isPro = true
         state.recomputeFilteredNotes()
         state.isEditing = true
         state.selectedNoteIDs = [note1.id, note2.id]
@@ -646,6 +650,7 @@ struct NotesListFeatureTests {
 
         var state = NotesListFeature.State()
         state.notes = [lockedNote1, note2]
+        state.isPro = true
         state.recomputeFilteredNotes()
         state.isEditing = true
         state.selectedNoteIDs = [note1.id, note2.id]
@@ -778,5 +783,71 @@ struct NotesListFeatureTests {
             $0.notes = [note1]
             $0.recomputeFilteredNotes()
         }
+    }
+
+    // MARK: - Subscription Gates
+
+    @Test func createTagFreeUserAtLimitShowsPaywall() async {
+        let tag1 = Tag(id: UUID(uuidString: "00000000-0000-0000-0000-aaaaaaaaaaaa")!, name: "Work", color: .blue)
+        let tag2 = Tag(id: UUID(uuidString: "00000000-0000-0000-0000-bbbbbbbbbbbb")!, name: "Personal", color: .green)
+        let tag3 = Tag(id: UUID(uuidString: "00000000-0000-0000-0000-cccccccccccc")!, name: "Urgent", color: .red)
+
+        var state = NotesListFeature.State()
+        state.notes = [note1]
+        state.allTags = [tag1, tag2, tag3]
+        state.isPro = false
+        state.recomputeFilteredNotes()
+        let store = TestStore(initialState: state) {
+            NotesListFeature()
+        }
+        await store.send(.createTagTapped)
+        await store.receive(\.delegate.paywallRequested)
+    }
+
+    @Test func createTagProUserAllowed() async {
+        let tag1 = Tag(id: UUID(uuidString: "00000000-0000-0000-0000-aaaaaaaaaaaa")!, name: "Work", color: .blue)
+        let tag2 = Tag(id: UUID(uuidString: "00000000-0000-0000-0000-bbbbbbbbbbbb")!, name: "Personal", color: .green)
+        let tag3 = Tag(id: UUID(uuidString: "00000000-0000-0000-0000-cccccccccccc")!, name: "Urgent", color: .red)
+
+        var state = NotesListFeature.State()
+        state.notes = [note1]
+        state.allTags = [tag1, tag2, tag3]
+        state.isPro = true
+        state.recomputeFilteredNotes()
+        let store = TestStore(initialState: state) {
+            NotesListFeature()
+        }
+        // TagEditorFeature.State() generates a random UUID, so use non-exhaustive
+        // to verify the gate passes without matching the exact UUID
+        store.exhaustivity = .off(showSkippedAssertions: false)
+        await store.send(.createTagTapped)
+        #expect(store.state.tagEditor != nil)
+        #expect(store.state.tagEditor?.isNew == true)
+    }
+
+    @Test func toggleLockFreeUserShowsPaywall() async {
+        var state = NotesListFeature.State()
+        state.notes = [note1]
+        state.isPro = false
+        state.recomputeFilteredNotes()
+        let store = TestStore(initialState: state) {
+            NotesListFeature()
+        }
+        await store.send(.toggleLock(note1))
+        await store.receive(\.delegate.paywallRequested)
+    }
+
+    @Test func lockSelectedFreeUserShowsPaywall() async {
+        var state = NotesListFeature.State()
+        state.notes = [note1, note2]
+        state.isPro = false
+        state.isEditing = true
+        state.selectedNoteIDs = [note1.id]
+        state.recomputeFilteredNotes()
+        let store = TestStore(initialState: state) {
+            NotesListFeature()
+        }
+        await store.send(.lockSelected)
+        await store.receive(\.delegate.paywallRequested)
     }
 }

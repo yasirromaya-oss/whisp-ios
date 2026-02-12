@@ -1,3 +1,4 @@
+import ConcurrencyExtras
 import ComposableArchitecture
 import DXWhispKit
 import Foundation
@@ -89,6 +90,7 @@ struct AppFeatureTests {
         let testURL = URL(fileURLWithPath: "/tmp/test.m4a")
         var state = AppFeature.State()
         state.tab = .record
+        state.isPro = true
         state.recording.recordingState = .processing
         state.recording.currentDuration = 5.0
         let store = TestStore(initialState: state) {
@@ -184,6 +186,129 @@ struct AppFeatureTests {
             $0.notesList.notes[id: sampleNote.id] = updatedNote
             $0.notesList.recomputeFilteredNotes()
             $0.recording.postRecording = .completed(updatedNote)
+        }
+    }
+
+    // MARK: - Subscription
+
+    @Test func subscriptionStatusUpdatedSyncsIsPro() async {
+        let store = TestStore(initialState: AppFeature.State()) {
+            AppFeature()
+        } withDependencies: {
+            $0.userDefaults.getBool = { _ in false }
+        }
+        await store.send(.subscriptionStatusUpdated(.subscribed(productID: "test", expirationDate: nil))) {
+            $0.subscriptionStatus = .subscribed(productID: "test", expirationDate: nil)
+            $0.isPro = true
+            $0.recording.isPro = true
+            $0.notesList.isPro = true
+            $0.settings.isPro = true
+            $0.settings.subscriptionStatus = .subscribed(productID: "test", expirationDate: nil)
+        }
+    }
+
+    @Test func subscriptionDowngradeDisablesAutoExport() async {
+        var state = AppFeature.State()
+        state.isPro = true
+        state.settings.isPro = true
+        state.settings.autoExportReminders = true
+        state.settings.autoExportCalendar = true
+        let persisted = LockIsolated<[UserDefaultsKey: Bool]>([:])
+        let store = TestStore(initialState: state) {
+            AppFeature()
+        } withDependencies: {
+            $0.userDefaults.setBool = { key, value in
+                persisted.withValue { $0[key] = value }
+            }
+        }
+        await store.send(.subscriptionStatusUpdated(.notSubscribed)) {
+            $0.subscriptionStatus = .notSubscribed
+            $0.isPro = false
+            $0.recording.isPro = false
+            $0.notesList.isPro = false
+            $0.settings.isPro = false
+            $0.settings.subscriptionStatus = .notSubscribed
+            $0.settings.autoExportReminders = false
+            $0.settings.autoExportCalendar = false
+        }
+        #expect(persisted.value[.autoExportReminders] == false)
+        #expect(persisted.value[.autoExportCalendar] == false)
+    }
+
+    @Test func showPaywallPresentsPaywall() async {
+        let store = TestStore(initialState: AppFeature.State()) {
+            AppFeature()
+        }
+        await store.send(.showPaywall) {
+            $0.paywall = SubscriptionFeature.State()
+        }
+    }
+
+    @Test func paywallSubscriptionActivatedDismissesAndSetsIsPro() async {
+        var state = AppFeature.State()
+        state.paywall = SubscriptionFeature.State()
+        let store = TestStore(initialState: state) {
+            AppFeature()
+        }
+        await store.send(.paywall(.presented(.delegate(.subscriptionActivated)))) {
+            $0.isPro = true
+            $0.subscriptionStatus = .subscribed(productID: "", expirationDate: nil)
+            $0.recording.isPro = true
+            $0.notesList.isPro = true
+            $0.settings.isPro = true
+            $0.settings.subscriptionStatus = .subscribed(productID: "", expirationDate: nil)
+            $0.paywall = nil
+        }
+    }
+
+    @Test func processRecordingFreeUserSkipsInsightsAndSpeakerData() async {
+        let testURL = URL(fileURLWithPath: "/tmp/free.m4a")
+        var state = AppFeature.State()
+        state.isPro = false
+        let insightsExtracted = LockIsolated(false)
+        let store = TestStore(initialState: state) {
+            AppFeature()
+        } withDependencies: {
+            $0.transcription.transcribe = { _ in
+                Transcription(
+                    text: "Hello",
+                    segments: [TranscriptionSegment(text: "Hello", timestamp: 0, duration: 1.0, confidence: 0.95)],
+                    speakerTurns: [SpeakerTurn(speakerLabel: "Speaker 1", text: "Hello", startTime: 0, endTime: 1.0)]
+                )
+            }
+            $0.transcription.extractInsights = { _ in
+                insightsExtracted.setValue(true)
+                return Insights(summary: "Should not appear")
+            }
+            $0.persistence.saveNote = { _ in }
+            $0.uuid = .incrementing
+            $0.date = .constant(Date(timeIntervalSince1970: 0))
+        }
+        let expectedNote = VoiceNote(
+            id: UUID(0),
+            createdAt: Date(timeIntervalSince1970: 0),
+            title: "Hello",
+            audioFilename: testURL.lastPathComponent,
+            duration: 5.0,
+            transcription: Transcription(text: "Hello"),
+            insights: nil
+        )
+        await store.send(.processRecording(testURL, 5.0))
+        await store.receive(\.transcriptionCompleted) {
+            $0.notesList.notes = [expectedNote]
+            $0.notesList.recomputeFilteredNotes()
+            $0.recording.postRecording = .completed(expectedNote)
+        }
+        #expect(insightsExtracted.value == false)
+    }
+
+    @Test func recordingDelegatePaywallRequestedShowsPaywall() async {
+        let store = TestStore(initialState: AppFeature.State()) {
+            AppFeature()
+        }
+        await store.send(.recording(.delegate(.paywallRequested)))
+        await store.receive(\.showPaywall) {
+            $0.paywall = SubscriptionFeature.State()
         }
     }
 }

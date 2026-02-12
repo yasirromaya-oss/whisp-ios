@@ -1,9 +1,12 @@
 import ComposableArchitecture
+import DXWhispKit
 import DXWhispUI
+import StoreKit
 import SwiftUI
 
 public struct SettingsView: View {
     @SwiftUI.Bindable var store: StoreOf<SettingsFeature>
+    @State private var showManageSubscriptions = false
 
     public init(store: StoreOf<SettingsFeature>) {
         self.store = store
@@ -12,6 +15,7 @@ public struct SettingsView: View {
     public var body: some View {
         ScrollView {
             VStack(spacing: Theme.Spacing.lg) {
+                subscriptionSection
                 integrationsSection
                 aboutSection
             }
@@ -20,6 +24,98 @@ public struct SettingsView: View {
         }
         .onAppear { store.send(.onAppear) }
         .accessibilityIdentifier("settings_list")
+    }
+
+    // MARK: - Subscription
+
+    private var subscriptionSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+            sectionHeader(L10n.Subscription.pro)
+
+            if store.isPro {
+                VStack(spacing: 0) {
+                    HStack(spacing: Theme.Spacing.md) {
+                        Image(systemName: "crown.fill")
+                            .foregroundStyle(.yellow)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(L10n.Subscription.activeSubscription)
+                                .font(Theme.Typography.body)
+                                .foregroundStyle(Theme.Colors.textPrimary)
+
+                            if case .subscribed(_, let expiration) = store.subscriptionStatus,
+                               let date = expiration {
+                                Text("Renews \(date.formatted(.dateTime.month().day().year()))")
+                                    .font(Theme.Typography.caption)
+                                    .foregroundStyle(Theme.Colors.textTertiary)
+                            }
+                        }
+
+                        Spacer()
+                    }
+                    .padding(Theme.Spacing.lg)
+
+                    Divider().opacity(0.3).padding(.horizontal, Theme.Spacing.lg)
+
+                    Button {
+                        showManageSubscriptions = true
+                    } label: {
+                        HStack {
+                            Label(L10n.Subscription.manageSub, systemImage: "gear")
+                                .font(Theme.Typography.body)
+                                .foregroundStyle(Theme.Colors.textPrimary)
+
+                            Spacer()
+
+                            Image(systemName: "arrow.up.right")
+                                .font(Theme.Typography.caption)
+                                .foregroundStyle(Theme.Colors.accent)
+                        }
+                        .padding(Theme.Spacing.lg)
+                        .contentShape(Rectangle())
+                    }
+                    .manageSubscriptionsSheet(isPresented: $showManageSubscriptions)
+                }
+                .glassCard()
+            } else {
+                Button {
+                    store.send(.upgradeButtonTapped)
+                } label: {
+                    HStack(spacing: Theme.Spacing.md) {
+                        Image(systemName: "crown.fill")
+                            .font(.system(size: 24))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [.yellow, .orange],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(L10n.Subscription.upgrade)
+                                .font(Theme.Typography.headline)
+                                .foregroundStyle(Theme.Colors.textPrimary)
+
+                            Text(L10n.Subscription.upgradeSubtitle)
+                                .font(Theme.Typography.caption)
+                                .foregroundStyle(Theme.Colors.textTertiary)
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .font(Theme.Typography.caption)
+                            .foregroundStyle(Theme.Colors.accent)
+                    }
+                    .padding(Theme.Spacing.lg)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .glassCard(isGlowing: true)
+                .accessibilityIdentifier("upgrade_button")
+            }
+        }
     }
 
     // MARK: - Integrations
@@ -33,6 +129,7 @@ public struct SettingsView: View {
                     title: L10n.Settings.autoExportActionItems,
                     icon: "checkmark.circle",
                     isOn: store.autoExportReminders,
+                    isPro: store.isPro,
                     action: { store.send(.toggleAutoExportReminders) }
                 )
 
@@ -42,6 +139,7 @@ public struct SettingsView: View {
                     title: L10n.Settings.autoExportEvents,
                     icon: "calendar",
                     isOn: store.autoExportCalendar,
+                    isPro: store.isPro,
                     action: { store.send(.toggleAutoExportCalendar) }
                 )
             }
@@ -101,12 +199,27 @@ public struct SettingsView: View {
         title: String,
         icon: String,
         isOn: Bool,
+        isPro: Bool = true,
         action: @escaping () -> Void
     ) -> some View {
         HStack(spacing: Theme.Spacing.md) {
-            Label(title, systemImage: icon)
-                .font(Theme.Typography.body)
-                .foregroundStyle(Theme.Colors.textPrimary)
+            Label {
+                HStack(spacing: Theme.Spacing.sm) {
+                    Text(title)
+                    if !isPro {
+                        Text(L10n.Subscription.pro)
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Theme.Colors.accent, in: Capsule())
+                    }
+                }
+            } icon: {
+                Image(systemName: icon)
+            }
+            .font(Theme.Typography.body)
+            .foregroundStyle(Theme.Colors.textPrimary)
 
             Spacer()
 

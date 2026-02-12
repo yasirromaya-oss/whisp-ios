@@ -197,6 +197,35 @@ enum L10n {
         static let color = String(localized: "tag_editor_color", defaultValue: "COLOR")
     }
 
+    // MARK: - Subscription
+
+    enum Subscription {
+        static let unlockPro = String(localized: "subscription_unlock_pro", defaultValue: "Unlock DXWhisp Pro")
+        static let subtitle = String(localized: "subscription_subtitle", defaultValue: "Unlimited recordings, AI insights, and more")
+        static let subscribe = String(localized: "subscription_subscribe", defaultValue: "Subscribe")
+        static let restorePurchases = String(localized: "subscription_restore_purchases", defaultValue: "Restore Purchases")
+        static let save40 = String(localized: "subscription_save_40", defaultValue: "Save 40%")
+        static let purchasePending = String(localized: "subscription_purchase_pending", defaultValue: "Your purchase is pending approval.")
+        static let noActiveSubscription = String(localized: "subscription_no_active_subscription", defaultValue: "No active subscription found. If you recently purchased, it may take a moment to activate.")
+        static let pro = String(localized: "subscription_pro", defaultValue: "PRO")
+        static let manageSub = String(localized: "subscription_manage", defaultValue: "Manage Subscription")
+        static let upgrade = String(localized: "subscription_upgrade", defaultValue: "Upgrade to Pro")
+        static let upgradeSubtitle = String(localized: "subscription_upgrade_subtitle", defaultValue: "Unlimited recordings, AI insights, auto-export, and more")
+        static let activeSubscription = String(localized: "subscription_active", defaultValue: "Active Subscription")
+
+        // Feature list
+        static let featureUnlimitedRecordings = String(localized: "subscription_feature_unlimited_recordings", defaultValue: "Unlimited recordings")
+        static let featureSpeakerDetection = String(localized: "subscription_feature_speaker_detection", defaultValue: "Speaker detection")
+        static let featureAIInsights = String(localized: "subscription_feature_ai_insights", defaultValue: "AI-powered insights")
+        static let featureAutoExport = String(localized: "subscription_feature_auto_export", defaultValue: "Auto-export to Reminders & Calendar")
+        static let featureUnlimitedTags = String(localized: "subscription_feature_unlimited_tags", defaultValue: "Unlimited tags")
+        static let featureBiometricLock = String(localized: "subscription_feature_biometric_lock", defaultValue: "Biometric lock")
+
+        static func freeRecordingsRemaining(_ count: Int) -> String {
+            String(localized: "\(count) free recording(s) remaining this month")
+        }
+    }
+
     // MARK: - Onboarding
 
     enum Onboarding {

@@ -38,6 +38,8 @@ public struct NotesListFeature: Sendable {
         public private(set) var filteredFavorites: [VoiceNote] = []
         public private(set) var filteredOthers: [VoiceNote] = []
 
+        public var isPro: Bool = false
+
         public init() {}
 
         /// Recomputes `filteredNotes`, `filteredFavorites`, and `filteredOthers` from current
@@ -87,6 +89,7 @@ public struct NotesListFeature: Sendable {
         case lockSelectedFailed(String, [VoiceNote])
         case searchDebounced(String)
         case noteUpdated(VoiceNote)
+        case delegate(Delegate)
 
         // Edit mode
         case editButtonTapped
@@ -133,6 +136,11 @@ public struct NotesListFeature: Sendable {
         case tagSaveSucceeded
         case tagSaveFailed(String)
         case tagDeleteFailed([Tag], [VoiceNote], Set<UUID>)
+
+        @CasePathable
+        public enum Delegate: Sendable {
+            case paywallRequested
+        }
     }
 
     @Dependency(\.persistence) var persistence
@@ -247,6 +255,10 @@ public struct NotesListFeature: Sendable {
             // MARK: - Lock
 
             case let .toggleLock(note):
+                // Free tier: locking requires Pro
+                if !state.isPro && !note.isLocked {
+                    return .send(.delegate(.paywallRequested))
+                }
                 state.notes[id: note.id]?.isLocked.toggle()
                 state.recomputeFilteredNotes()
                 guard let updatedNote = state.notes[id: note.id] else { return .none }
@@ -265,6 +277,9 @@ public struct NotesListFeature: Sendable {
                 return .none
 
             case .lockSelected:
+                if !state.isPro {
+                    return .send(.delegate(.paywallRequested))
+                }
                 let selectedIDs = state.selectedNoteIDs
                 var updatedNotes: [VoiceNote] = []
                 var originalNotes: [VoiceNote] = []
@@ -594,6 +609,10 @@ public struct NotesListFeature: Sendable {
             // MARK: - Tag Management
 
             case .createTagTapped:
+                // Free tier: 3 tags max
+                if !state.isPro && state.allTags.count >= 3 {
+                    return .send(.delegate(.paywallRequested))
+                }
                 state.tagEditor = TagEditorFeature.State()
                 return .none
 
@@ -671,6 +690,9 @@ public struct NotesListFeature: Sendable {
                 state.selectedFilterTagIDs = originalFilterTagIDs
                 state.recomputeFilteredNotes()
                 state.operationError = L10n.NotesList.tagDeleteFailed
+                return .none
+
+            case .delegate:
                 return .none
             }
         }
