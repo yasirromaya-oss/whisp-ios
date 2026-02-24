@@ -34,14 +34,10 @@ public struct NotesListFeature: Sendable {
 
         /// Memoized filtered notes — recomputed by the reducer on data/search changes.
         public private(set) var filteredNotes: [VoiceNote] = []
-        /// Memoized favorite/non-favorite split — avoids O(2n) filter in view body.
-        public private(set) var filteredFavorites: [VoiceNote] = []
-        public private(set) var filteredOthers: [VoiceNote] = []
 
         public init() {}
 
-        /// Recomputes `filteredNotes`, `filteredFavorites`, and `filteredOthers` from current
-        /// `notes`, `selectedFilterTagIDs`, and `debouncedSearchText`.
+        /// Recomputes `filteredNotes` from current `notes`, `selectedFilterTagIDs`, and `debouncedSearchText`.
         /// Call this from the reducer after any mutation to `notes`, `selectedFilterTagIDs`, or `debouncedSearchText`.
         public mutating func recomputeFilteredNotes() {
             var result = notes.elements
@@ -62,8 +58,6 @@ public struct NotesListFeature: Sendable {
             }
 
             filteredNotes = result
-            filteredFavorites = result.filter(\.isFavorite)
-            filteredOthers = result.filter { !$0.isFavorite }
         }
     }
 
@@ -77,8 +71,6 @@ public struct NotesListFeature: Sendable {
         case deleteNoteSucceeded(UUID)
         case deleteNoteFailed(String)
         case dismissOperationError
-        case toggleFavorite(VoiceNote)
-        case toggleFavoriteFailed(VoiceNote)
         case toggleLock(VoiceNote)
         case toggleLockFailed(VoiceNote)
         case lockSelected
@@ -224,24 +216,6 @@ public struct NotesListFeature: Sendable {
                 state.notes.remove(id: id)
                 state.selectedNoteIDs.remove(id)
                 state.recomputeFilteredNotes()
-                return .none
-
-            case let .toggleFavorite(note):
-                state.notes[id: note.id]?.isFavorite.toggle()
-                state.recomputeFilteredNotes()
-                guard let updatedNote = state.notes[id: note.id] else { return .none }
-                return .run { send in
-                    do {
-                        try await persistence.updateNote(updatedNote)
-                    } catch {
-                        await send(.toggleFavoriteFailed(note))
-                    }
-                }
-
-            case let .toggleFavoriteFailed(originalNote):
-                state.notes[id: originalNote.id] = originalNote
-                state.recomputeFilteredNotes()
-                state.operationError = L10n.NotesList.updateFailed
                 return .none
 
             // MARK: - Lock

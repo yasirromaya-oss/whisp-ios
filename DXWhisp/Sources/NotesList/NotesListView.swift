@@ -124,9 +124,6 @@ public struct NotesListView: View {
                 filteredEmptyState
             } else {
                 ScrollView {
-                    let favorites = store.filteredFavorites
-                    let others = store.filteredOthers
-
                     // Precompute tag colors once per render instead of per-note in ForEach
                     let tagColorMap: [VoiceNote.ID: [Color]] = {
                         var map: [VoiceNote.ID: [Color]] = [:]
@@ -138,13 +135,7 @@ public struct NotesListView: View {
                     }()
 
                     LazyVStack(spacing: Theme.Spacing.lg) {
-                        if !favorites.isEmpty {
-                            notesSection(title: L10n.NotesList.favorites, notes: favorites, tagColorMap: tagColorMap)
-                        }
-
-                        if !others.isEmpty {
-                            notesSection(title: favorites.isEmpty ? nil : L10n.NotesList.allNotes, notes: others, tagColorMap: tagColorMap)
-                        }
+                        notesSection(title: nil, notes: store.filteredNotes, tagColorMap: tagColorMap)
                     }
                     .padding(.horizontal, Theme.Spacing.xl)
                     .padding(.vertical, Theme.Spacing.lg)
@@ -439,15 +430,6 @@ public struct NotesListView: View {
                 ))
                 .contextMenu {
                     if !store.isEditing && !note.isLocked {
-                        Button {
-                            store.send(.toggleFavorite(note))
-                        } label: {
-                            Label(
-                                note.isFavorite ? L10n.NotesList.removeFromFavorites : L10n.NotesList.addToFavorites,
-                                systemImage: note.isFavorite ? "star.slash" : "star"
-                            )
-                        }
-
                         Button {
                             store.send(.toggleLock(note))
                         } label: {

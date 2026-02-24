@@ -212,38 +212,6 @@ struct NoteDetailDeleteTests {
     }
 }
 
-// MARK: - Toggle Favorite
-
-@MainActor
-struct NoteDetailFavoriteTests {
-    @Test func toggleFavoriteSucceeds() async {
-        let store = TestStore(initialState: NoteDetailFeature.State(note: testNote)) {
-            NoteDetailFeature()
-        } withDependencies: {
-            $0.persistence.updateNote = { _ in }
-        }
-        await store.send(.toggleFavorite) {
-            $0.note.isFavorite = true
-        }
-        await store.receive(\.delegate.noteUpdated)
-    }
-
-    @Test func toggleFavoriteFailsReverts() async {
-        let store = TestStore(initialState: NoteDetailFeature.State(note: testNote)) {
-            NoteDetailFeature()
-        } withDependencies: {
-            $0.persistence.updateNote = { _ in throw NSError(domain: "test", code: 1) }
-        }
-        await store.send(.toggleFavorite) {
-            $0.note.isFavorite = true
-        }
-        await store.receive(\.toggleFavoriteFailed) {
-            $0.note.isFavorite = false
-            $0.errorMessage = "We couldn't save that change. Please try again."
-        }
-    }
-}
-
 // MARK: - Export
 
 @MainActor

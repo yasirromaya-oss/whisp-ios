@@ -31,15 +31,6 @@ public struct NoteDetailView: View {
                     ToolbarItem(placement: .primaryAction) {
                         Menu {
                             Button {
-                                store.send(.toggleFavorite)
-                            } label: {
-                                Label(
-                                    store.note.isFavorite ? L10n.NotesList.removeFromFavorites : L10n.NotesList.addToFavorites,
-                                    systemImage: store.note.isFavorite ? "star.slash" : "star"
-                                )
-                            }
-
-                            Button {
                                 store.send(.toggleLock)
                             } label: {
                                 Label(

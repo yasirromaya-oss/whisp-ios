@@ -109,7 +109,7 @@ private final class AudioRecorder: NSObject, AVAudioRecorderDelegate, @unchecked
                 .urls(for: .documentDirectory, in: .userDomainMask)[0]
                 .appendingPathComponent("Audio", isDirectory: true)
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true, attributes: [
-                .protectionKey: FileProtectionType.complete,
+                .protectionKey: FileProtectionType.completeUntilFirstUserAuthentication,
             ])
 
             let fileURL: URL
@@ -240,7 +240,7 @@ private final class AudioRecorder: NSObject, AVAudioRecorderDelegate, @unchecked
         if success, let url {
             do {
                 try FileManager.default.setAttributes(
-                    [.protectionKey: FileProtectionType.complete],
+                    [.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication],
                     ofItemAtPath: url.path
                 )
             } catch {
