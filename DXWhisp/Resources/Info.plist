@@ -35,6 +35,10 @@
 	<string>Export action items from your voice notes to Reminders</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>Export events from your voice notes to Calendar</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIImageName</key>
