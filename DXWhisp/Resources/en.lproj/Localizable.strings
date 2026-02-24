@@ -36,7 +36,6 @@
 "notes_list_search_prompt" = "Search notes";
 "notes_list_empty_title" = "No Notes Yet";
 "notes_list_empty_subtitle" = "Record your first voice note to get started";
-"notes_list_favorites" = "Favorites";
 "notes_list_all_notes" = "All Notes";
 "notes_list_no_matching_notes" = "No Matching Notes";
 "notes_list_no_results" = "No Results";
@@ -48,8 +47,6 @@
 "notes_list_deselect_all" = "Deselect All";
 "notes_list_lock" = "Lock";
 "notes_list_delete_all" = "Delete All";
-"notes_list_add_to_favorites" = "Add to Favorites";
-"notes_list_remove_from_favorites" = "Remove from Favorites";
 "notes_list_tags" = "Tags";
 "notes_list_tag" = "Tag";
 "notes_list_edit_tag" = "Edit Tag";

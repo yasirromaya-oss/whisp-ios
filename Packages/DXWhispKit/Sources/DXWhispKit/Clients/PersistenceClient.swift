@@ -63,8 +63,6 @@ private struct LegacyNoteEntity: Codable {
     let duration: TimeInterval
     let transcription: Transcription?
     let insights: Insights?
-    var isFavorite: Bool
-
     func toVoiceNote() -> VoiceNote {
         VoiceNote(
             id: id,
@@ -73,8 +71,7 @@ private struct LegacyNoteEntity: Codable {
             audioFilename: audioURL.lastPathComponent,
             duration: duration,
             transcription: transcription,
-            insights: insights,
-            isFavorite: isFavorite
+            insights: insights
         )
     }
 }
@@ -302,7 +299,7 @@ private func createScreenshotMockData() -> ([VoiceNote], [Tag]) {
     let tagHealth = Tag(id: UUID(), name: "Health", color: .teal)
     let tags = [tagWork, tagPersonal, tagIdeas, tagUrgent, tagHealth]
 
-    // 1. Product launch meeting — multi-speaker, favorited, work + urgent
+    // 1. Product launch meeting — multi-speaker, work + urgent
     let note1 = VoiceNote(
         id: UUID(),
         createdAt: calendar.date(byAdding: .hour, value: -2, to: now)!,
@@ -345,7 +342,6 @@ private func createScreenshotMockData() -> ([VoiceNote], [Tag]) {
                 "Investor update due tomorrow",
             ]
         ),
-        isFavorite: true,
         tagIDs: [tagWork.id, tagUrgent.id]
     )
 
@@ -378,7 +374,6 @@ private func createScreenshotMockData() -> ([VoiceNote], [Tag]) {
                 "Vitamin D supplements recommended",
             ]
         ),
-        isFavorite: false,
         tagIDs: [tagPersonal.id, tagHealth.id]
     )
 
@@ -405,7 +400,6 @@ private func createScreenshotMockData() -> ([VoiceNote], [Tag]) {
                 "Apple Health integration for sleep data",
             ]
         ),
-        isFavorite: true,
         tagIDs: [tagIdeas.id]
     )
 
@@ -429,7 +423,6 @@ private func createScreenshotMockData() -> ([VoiceNote], [Tag]) {
                 "Shopping needed after work",
             ]
         ),
-        isFavorite: false,
         tagIDs: [tagPersonal.id]
     )
 
@@ -465,7 +458,6 @@ private func createScreenshotMockData() -> ([VoiceNote], [Tag]) {
                 "Phase two budget expected next month",
             ]
         ),
-        isFavorite: false,
         tagIDs: [tagWork.id]
     )
 

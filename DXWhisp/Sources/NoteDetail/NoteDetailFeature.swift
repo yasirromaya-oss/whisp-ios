@@ -42,9 +42,7 @@ public struct NoteDetailFeature: Sendable {
         case exportToRemindersFailed(ActionItem)
         case exportToCalendarFailed(ExtractedEvent)
         case deleteFailed
-        case toggleFavoriteFailed
         case dismissError
-        case toggleFavorite
         case authenticationRequired
         case authenticationSucceeded
         case authenticationFailed(String)
@@ -278,25 +276,6 @@ public struct NoteDetailFeature: Sendable {
             case let .exportToCalendarFailed(originalEvent):
                 updateEvent(&state.note, originalEvent)
                 state.errorMessage = L10n.NoteDetail.exportCalendarFailed
-                return .none
-
-            case .toggleFavorite:
-                state.note.isFavorite.toggle()
-                return .merge(
-                    .run { @MainActor _ in haptic.selection() },
-                    .run { [note = state.note] send in
-                        do {
-                            try await persistence.updateNote(note)
-                            await send(.delegate(.noteUpdated(note)))
-                        } catch {
-                            await send(.toggleFavoriteFailed)
-                        }
-                    }
-                )
-
-            case .toggleFavoriteFailed:
-                state.note.isFavorite.toggle()
-                state.errorMessage = L10n.NoteDetail.saveFailed
                 return .none
 
             case .authenticationRequired:

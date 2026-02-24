@@ -8,7 +8,6 @@ public struct VoiceNote: Equatable, Sendable, Identifiable, Codable {
     public let duration: TimeInterval
     public var transcription: Transcription?
     public var insights: Insights?
-    public var isFavorite: Bool
     public var isLocked: Bool
     public var tagIDs: [UUID]
 
@@ -25,7 +24,6 @@ public struct VoiceNote: Equatable, Sendable, Identifiable, Codable {
         duration: TimeInterval,
         transcription: Transcription? = nil,
         insights: Insights? = nil,
-        isFavorite: Bool = false,
         isLocked: Bool = false,
         tagIDs: [UUID] = []
     ) {
@@ -36,7 +34,6 @@ public struct VoiceNote: Equatable, Sendable, Identifiable, Codable {
         self.duration = duration
         self.transcription = transcription
         self.insights = insights
-        self.isFavorite = isFavorite
         self.isLocked = isLocked
         self.tagIDs = tagIDs
     }
@@ -52,7 +49,6 @@ public struct VoiceNote: Equatable, Sendable, Identifiable, Codable {
         duration = try container.decode(TimeInterval.self, forKey: .duration)
         transcription = try container.decodeIfPresent(Transcription.self, forKey: .transcription)
         insights = try container.decodeIfPresent(Insights.self, forKey: .insights)
-        isFavorite = try container.decode(Bool.self, forKey: .isFavorite)
         isLocked = try container.decodeIfPresent(Bool.self, forKey: .isLocked) ?? false
         tagIDs = try container.decodeIfPresent([UUID].self, forKey: .tagIDs) ?? []
     }

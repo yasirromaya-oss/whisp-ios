@@ -44,7 +44,7 @@ public struct NoteCard: View {
                 }
             }
             .padding(Theme.Spacing.lg)
-            .glassCard(isGlowing: note.isFavorite && !isEditing)
+            .glassCard()
             .overlay {
                 if isEditing && isSelected {
                     RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
@@ -121,12 +121,6 @@ public struct NoteCard: View {
                     .foregroundStyle(Theme.Colors.textTertiary)
             }
 
-            if note.isFavorite {
-                Image(systemName: "star.fill")
-                    .font(.caption2)
-                    .foregroundStyle(.yellow)
-                    .transition(.scale.combined(with: .opacity))
-            }
         }
     }
 
@@ -175,7 +169,6 @@ extension NoteCard: Equatable {
                 audioFilename: "test.m4a",
                 duration: 125,
                 transcription: Transcription(text: "Sample transcription text that shows how the card looks with content."),
-                isFavorite: true
             ),
             tagColors: [.blue, .red],
             onTap: {}

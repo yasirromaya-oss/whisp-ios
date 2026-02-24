@@ -116,41 +116,6 @@ struct NotesListFeatureTests {
         }
     }
 
-    @Test func toggleFavorite() async {
-        var state = NotesListFeature.State()
-        state.notes = [note1]
-        state.recomputeFilteredNotes()
-        let store = TestStore(initialState: state) {
-            NotesListFeature()
-        } withDependencies: {
-            $0.persistence.updateNote = { _ in }
-        }
-        await store.send(.toggleFavorite(note1)) {
-            $0.notes[id: note1.id]?.isFavorite = true
-            $0.recomputeFilteredNotes()
-        }
-    }
-
-    @Test func toggleFavoriteFailedRevertsState() async {
-        var state = NotesListFeature.State()
-        state.notes = [note1]
-        state.recomputeFilteredNotes()
-        let store = TestStore(initialState: state) {
-            NotesListFeature()
-        } withDependencies: {
-            $0.persistence.updateNote = { _ in throw NSError(domain: "test", code: 1) }
-        }
-        await store.send(.toggleFavorite(note1)) {
-            $0.notes[id: note1.id]?.isFavorite = true
-            $0.recomputeFilteredNotes()
-        }
-        await store.receive(\.toggleFavoriteFailed) {
-            $0.notes[id: note1.id]?.isFavorite = false
-            $0.recomputeFilteredNotes()
-            $0.operationError = "We couldn't update that note. Please try again."
-        }
-    }
-
     @Test func searchDebouncesBeforeFiltering() async {
         var state = NotesListFeature.State()
         state.notes = [note1, note2]
