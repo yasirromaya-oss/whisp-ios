@@ -25,6 +25,22 @@
   - Distribution: `metadata`, `beta`, `release`
   - Versioning: `bump`
 
+## Subscription (Freemium)
+| Feature | Free | Pro |
+|---------|------|-----|
+| Recordings | 3/month | Unlimited |
+| Transcription | Basic text only | + speaker detection |
+| AI Insights | No | Yes |
+| Auto-export | No | Reminders + Calendar |
+| Tags | 3 max | Unlimited |
+| Biometric lock | No | Yes |
+
+- **StoreKit 2**: monthly ($6.99) + yearly ($49.99, "Save 40%")
+- **AppFeature.isPro** = single source of truth, synced to children via `syncIsProToChildren()`
+- **Cached**: `UserDefaults.isProCached` for instant UI on cold launch; verified async with StoreKit
+- **Gates**: child features send `.delegate(.paywallRequested)` → AppFeature presents paywall sheet
+- **Downgrade**: auto-disables `autoExportReminders` + `autoExportCalendar`
+
 ## Data Flow: Record → Transcribe → Save → Display
 ```
 RecordButton tap → AudioRecorderClient.startRecording() → .m4a file
@@ -32,10 +48,11 @@ RecordButton tap → AudioRecorderClient.startRecording() → .m4a file
   → RecordingFeature.delegate(.recordingCompleted(url, duration))
   → AppFeature.processRecording(url, duration)
     → TranscriptionClient.transcribe(url) → Transcription (text + segments + speakerTurns)
-    → TranscriptionClient.extractInsights(text) → Insights (rule-based NLP + optional AI)
+    → [Pro only] segments + speakerTurns preserved; free users get text-only
+    → [Pro only] TranscriptionClient.extractInsights(text) → Insights
     → VoiceNote created (id, title, audioURL, duration, transcription, insights)
     → PersistenceClient.saveNote(note) → ~/Documents/Notes/{UUID}.json
-    → Auto-export: actionItems → Reminders, events → Calendar (if enabled in Settings)
+    → [Pro only] Auto-export: actionItems → Reminders, events → Calendar
     → .transcriptionCompleted(note) → notesList.notes.insert(note)
     → currentNote = NoteDetailFeature.State(note:) → sheet opens
 ```
@@ -51,44 +68,48 @@ RootView (onboarding gate: hasCompletedOnboarding?)
     ├── Record Tab → RecordingView (NavigationStack)
     │   └── Lottie RecordingAnimationView during recording
     └── Settings Tab → SettingsView (NavigationStack)
-        └── IntegrationSettingsView (auto-export toggles)
+        └── Subscription section + integration toggles
+    + .sheet(item: paywall) → PaywallView (from any tab via delegate)
 ```
 - Note detail: `@Presents var currentNote: NoteDetailFeature.State?` on AppFeature
 - Open: `state.currentNote = NoteDetailFeature.State(note:)`
 - Close: `state.currentNote = nil`
 
 ## State Ownership
-- **AppFeature** owns: `tab`, `transcriptionState`, `error`, and scopes into child features
+- **AppFeature** owns: `tab`, `isPro`, `subscriptionStatus`, `error`, and scopes into child features
+- **AppFeature** syncs `isPro` to all children via `syncIsProToChildren()` on subscription updates
 - **AppFeature.notesList.notes** (`IdentifiedArrayOf<VoiceNote>`) — the single source of truth for all notes
-- **NotesListFeature** owns: `filteredNotes` (memoized, recomputed via `recomputeFilteredNotes()`), `tags`, `selectedFilterTagIDs`, `selectedNoteIDs` (bulk ops), `isEditing`
+- **NotesListFeature** owns: `filteredNotes` (memoized, recomputed via `recomputeFilteredNotes()`), `tags`, `selectedFilterTagIDs`, `selectedNoteIDs` (bulk ops), `isEditing`, `isPro` (synced)
 - **NoteDetailFeature** gets a copy of one note via `@Presents` — communicates changes back via `.delegate(.noteUpdated(note))` and `.delegate(.noteDeleted(id))`
-- **RecordingFeature** owns: `recordingState`, `currentDuration`, `postRecording`
+- **RecordingFeature** owns: `recordingState`, `currentDuration`, `postRecording`, `isPro` + `monthlyRecordingCount` (synced)
 - **AppFeature** mutates `notesList.notes` on delegate receipt — never NoteDetail directly
 
 ## Feature Hierarchy
 ```
 RootFeature
 ├── OnboardingFeature (multi-page intro, permission requests)
-└── AppFeature (tabs + transcription orchestration + auto-export)
+└── AppFeature (tabs + transcription orchestration + auto-export + subscription)
     ├── NotesListFeature (load, search, filter by tags, favorite, delete, bulk ops, lock)
     │   └── TagEditorFeature (@Presents — CRUD tags with colors)
-    ├── RecordingFeature (permission, record, timer, stop)
+    ├── RecordingFeature (permission, record, timer, stop, 3/month free limit)
     ├── NoteDetailFeature (@Presents — playback, speaker turns, export, delete, lock/unlock, biometric auth)
-    └── SettingsFeature (preferences, auto-export toggles, onboarding reset)
+    ├── SettingsFeature (preferences, auto-export toggles, subscription status)
+    └── SubscriptionFeature (@Presents — paywall with product cards, purchase, restore)
 ```
 **Packages**: `DXWhispKit` (models + clients) | `DXWhispUI` (shared components)
 
 ## Clients (DXWhispKit — all @Dependency injected)
 ```swift
-AudioRecorderClient:  requestPermission, prepareSession, startRecording, stopRecording → URL
-AudioPlayerClient:    play(URL), pause, resume, seek(TimeInterval), currentTime, onPlaybackFinished → AsyncStream
-TranscriptionClient:  transcribe(URL) → Transcription, extractInsights(String) → Insights,
-                      requestSpeechAuthorization() → Bool
-PersistenceClient:    saveNote, loadNotes, deleteNote, updateNote, saveTags, loadTags
-EventKitClient:       requestRemindersAccess, addReminder, requestCalendarAccess, addCalendarEvent
-BiometricClient:      authenticate() → Bool (Face ID / Touch ID / Optic ID)
-HapticClient:         impact(FeedbackStyle), notification(FeedbackType), selection()
-UserDefaultsClient:   getBool, setBool
+AudioRecorderClient:    requestPermission, prepareSession, startRecording, stopRecording → URL
+AudioPlayerClient:      play(URL), pause, resume, seek(TimeInterval), currentTime, onPlaybackFinished → AsyncStream
+TranscriptionClient:    transcribe(URL) → Transcription, extractInsights(String) → Insights,
+                        requestSpeechAuthorization() → Bool
+PersistenceClient:      saveNote, loadNotes, deleteNote, updateNote, saveTags, loadTags
+EventKitClient:         requestRemindersAccess, addReminder, requestCalendarAccess, addCalendarEvent
+BiometricClient:        authenticate() → Bool (Face ID / Touch ID / Optic ID)
+HapticClient:           impact(FeedbackStyle), notification(FeedbackType), selection()
+UserDefaultsClient:     getBool, setBool, optionalBool
+SubscriptionClient:     checkStatus, loadProducts, purchase(String), restorePurchases, statusStream
 ```
 
 ## Models (DXWhispKit)
@@ -106,6 +127,10 @@ Insights:             summary?, actionItems: [ActionItem], events: [ExtractedEve
 ActionItem:           id, text, isCompleted, exportedToReminders
 ExtractedEvent:       id, title, date?, rawDateText, exportedToCalendar
 RecordingState:       .idle | .recording(duration:) | .processing
+SubscriptionStatus:   .unknown | .notSubscribed | .subscribed(productID, expirationDate?)
+                      | .expired(...) | .inGracePeriod(...) | .inBillingRetry(...) | .revoked
+                      — .isPro computed: true for .subscribed and .inGracePeriod
+SubscriptionProduct:  id, displayName, description, displayPrice, price, period (.monthly/.yearly)
 ```
 
 ## Transcription Pipeline
@@ -166,15 +191,16 @@ RecordingState:       .idle | .recording(duration:) | .processing
 }
 ```
 
-## Test Coverage (127 tests, ~2,323 lines, 8 suites)
-- **NoteDetailFeatureTests** (867 lines, 44 tests) — playback, export, delete, lock, biometric auth, transcript editing, merge preservation
-- **NotesListFeatureTests** (782 lines, 37 tests) — search, filter, tags, bulk ops, favorites, locking, rename, delete
-- **AppFeatureTests** (189 lines, 11 tests) — transcription flow, tab switching, note presentation
-- **RecordingFeatureTests** (177 lines, 13 tests) — permission, audio level, recording lifecycle, failure states
-- **SettingsFeatureTests** (109 lines, 6 tests) — defaults loading, auto-export toggles, onboarding reset
-- **OnboardingFeatureTests** (83 lines, 7 tests) — page flow, permissions, completion
-- **TagEditorFeatureTests** (62 lines, 6 tests) — create, update, delete tags
-- **RootFeatureTests** (54 lines, 3 tests) — onboarding gate
+## Test Coverage (156 tests, 9 suites)
+- **NoteDetailFeatureTests** (48 tests) — playback, export, delete, lock, biometric auth, transcript editing, merge preservation, Pro gates
+- **NotesListFeatureTests** (41 tests) — search, filter, tags, bulk ops, favorites, locking, rename, delete, Pro gates
+- **AppFeatureTests** (17 tests) — transcription flow, tab switching, note presentation, subscription sync, paywall, Pro gating
+- **RecordingFeatureTests** (17 tests) — permission, audio level, recording lifecycle, failure states, free tier limit
+- **SubscriptionFeatureTests** (12 tests) — product loading, purchase flows, restore, error handling
+- **SettingsFeatureTests** (9 tests) — defaults loading, auto-export toggles, upgrade button, Pro gates
+- **OnboardingFeatureTests** (7 tests) — page flow, permissions, completion
+- **TagEditorFeatureTests** (6 tests) — create, update, delete tags
+- **RootFeatureTests** (3 tests) — onboarding gate
 
 ## SwiftUI Performance
 - Extract views > 100 lines

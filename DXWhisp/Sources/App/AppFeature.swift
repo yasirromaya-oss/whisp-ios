@@ -13,10 +13,20 @@ public struct AppFeature: Sendable {
         public var notesList: NotesListFeature.State = .init()
         public var settings: SettingsFeature.State = .init()
         @Presents public var currentNote: NoteDetailFeature.State?
+        @Presents public var paywall: SubscriptionFeature.State?
+        public var isPro: Bool = false
+        public var subscriptionStatus: SubscriptionStatus = .unknown
         public var error: String?
 
         public enum Tab: Equatable, Sendable {
             case notes, record, settings
+        }
+
+        /// Number of recordings created in the current calendar month.
+        public var monthlyRecordingCount: Int {
+            let calendar = Calendar.current
+            let now = Date()
+            return notesList.notes.filter { calendar.isDate($0.createdAt, equalTo: now, toGranularity: .month) }.count
         }
 
         public init() {}
@@ -28,6 +38,7 @@ public struct AppFeature: Sendable {
         case notesList(NotesListFeature.Action)
         case noteDetail(PresentationAction<NoteDetailFeature.Action>)
         case settings(SettingsFeature.Action)
+        case paywall(PresentationAction<SubscriptionFeature.Action>)
         case processRecording(URL, TimeInterval)
         case transcriptionCompleted(VoiceNote)
         case transcriptionFailed(String)
@@ -35,6 +46,9 @@ public struct AppFeature: Sendable {
         case dismissError
         case lockedNoteAuthSucceeded(VoiceNote)
         case lockedNoteAuthFailed
+        case checkSubscriptionStatus
+        case subscriptionStatusUpdated(SubscriptionStatus)
+        case showPaywall
     }
 
     @Dependency(\.transcription) var transcription
@@ -44,9 +58,11 @@ public struct AppFeature: Sendable {
     @Dependency(\.date) var date
     @Dependency(\.haptic) var haptic
     @Dependency(\.biometric) var biometric
+    @Dependency(\.subscription) var subscription
+    @Dependency(\.userDefaults) var userDefaults
 
     private static let logger = Logger(subsystem: "me.yasirromaya.whisp", category: "AppFeature")
-    private enum CancelID { case transcription, biometricAuth }
+    private enum CancelID { case transcription, biometricAuth, subscriptionMonitor }
 
     public init() {}
 
@@ -69,6 +85,56 @@ public struct AppFeature: Sendable {
                 state.tab = tab
                 return .none
 
+            // MARK: - Subscription
+
+            case .checkSubscriptionStatus:
+                // Read cached value for instant UI
+                state.isPro = userDefaults.getBool(.isProCached)
+                syncIsProToChildren(&state)
+                return .merge(
+                    .run { send in
+                        let status = await subscription.checkStatus()
+                        await send(.subscriptionStatusUpdated(status))
+                    },
+                    .run { send in
+                        for await status in subscription.statusStream() {
+                            await send(.subscriptionStatusUpdated(status))
+                        }
+                    }
+                    .cancellable(id: CancelID.subscriptionMonitor, cancelInFlight: true)
+                )
+
+            case let .subscriptionStatusUpdated(status):
+                let wasPro = state.isPro
+                state.subscriptionStatus = status
+                state.isPro = status.isPro
+                syncIsProToChildren(&state)
+
+                // If downgraded, disable auto-export
+                if wasPro && !status.isPro {
+                    state.settings.autoExportReminders = false
+                    state.settings.autoExportCalendar = false
+                    userDefaults.setBool(.autoExportReminders, false)
+                    userDefaults.setBool(.autoExportCalendar, false)
+                }
+                return .none
+
+            case .showPaywall:
+                state.paywall = SubscriptionFeature.State()
+                return .none
+
+            case .paywall(.presented(.delegate(.subscriptionActivated))):
+                state.isPro = true
+                state.subscriptionStatus = .subscribed(productID: "", expirationDate: nil)
+                syncIsProToChildren(&state)
+                state.paywall = nil
+                return .none
+
+            case .paywall:
+                return .none
+
+            // MARK: - Recording Delegates
+
             case let .recording(.delegate(.recordingCompleted(url, duration))):
                 state.recording.recordingState = .idle
                 state.recording.currentDuration = 0
@@ -76,15 +142,23 @@ public struct AppFeature: Sendable {
                 return .send(.processRecording(url, duration))
 
             case let .recording(.delegate(.viewNote(note))):
-                state.currentNote = NoteDetailFeature.State(note: note)
+                var detailState = NoteDetailFeature.State(note: note)
+                detailState.isPro = state.isPro
+                state.currentNote = detailState
                 return .none
+
+            case .recording(.delegate(.paywallRequested)):
+                return .send(.showPaywall)
 
             case .recording:
                 return .none
 
+            // MARK: - Process Recording
+
             case let .processRecording(url, duration):
-                let autoExportReminders = state.settings.autoExportReminders
-                let autoExportCalendar = state.settings.autoExportCalendar
+                let autoExportReminders = state.settings.autoExportReminders && state.isPro
+                let autoExportCalendar = state.settings.autoExportCalendar && state.isPro
+                let isPro = state.isPro
                 return .run { [uuid, date] send in
                     // Protect transcription pipeline from app suspension
                     let bgTaskID = await UIApplication.shared.beginBackgroundTask(
@@ -99,13 +173,24 @@ public struct AppFeature: Sendable {
                     }
 
                     do {
-                        let result = try await transcription.transcribe(url)
+                        var result = try await transcription.transcribe(url)
+
+                        // Free users: strip speaker detection data
+                        if !isPro {
+                            result = Transcription(
+                                text: result.text,
+                                segments: [],
+                                speakerTurns: []
+                            )
+                        }
+
+                        // Only extract insights for Pro users
                         var noteInsights: Insights?
-                        if !result.text.isEmpty {
+                        if isPro, !result.text.isEmpty {
                             noteInsights = try await transcription.extractInsights(result.text)
                         }
 
-                        // Auto-export action items to Reminders
+                        // Auto-export action items to Reminders (Pro only)
                         if autoExportReminders, let items = noteInsights?.actionItems, !items.isEmpty {
                             let granted = await eventKit.requestRemindersAccess()
                             if granted {
@@ -123,7 +208,7 @@ public struct AppFeature: Sendable {
                             }
                         }
 
-                        // Auto-export events to Calendar
+                        // Auto-export events to Calendar (Pro only)
                         if autoExportCalendar, let events = noteInsights?.events, !events.isEmpty {
                             let granted = await eventKit.requestCalendarAccess()
                             if granted {
@@ -173,6 +258,7 @@ public struct AppFeature: Sendable {
             case let .lockedNoteAuthSucceeded(note):
                 var detailState = NoteDetailFeature.State(note: note)
                 detailState.isAuthenticated = true
+                detailState.isPro = state.isPro
                 state.currentNote = detailState
                 return .none
 
@@ -183,7 +269,11 @@ public struct AppFeature: Sendable {
                 state.notesList.notes.insert(note, at: 0)
                 state.notesList.recomputeFilteredNotes()
                 state.recording.postRecording = .completed(note)
+                // Sync monthly count after adding note
+                state.recording.monthlyRecordingCount = state.monthlyRecordingCount
                 return .run { @MainActor _ in haptic.notification(.success) }
+
+            // MARK: - Notes List
 
             case let .notesList(.noteTapped(note)):
                 if note.isLocked {
@@ -201,11 +291,18 @@ public struct AppFeature: Sendable {
                     }
                     .cancellable(id: CancelID.biometricAuth, cancelInFlight: true)
                 }
-                state.currentNote = NoteDetailFeature.State(note: note)
+                var detailState = NoteDetailFeature.State(note: note)
+                detailState.isPro = state.isPro
+                state.currentNote = detailState
                 return .none
+
+            case .notesList(.delegate(.paywallRequested)):
+                return .send(.showPaywall)
 
             case .notesList:
                 return .none
+
+            // MARK: - Note Detail
 
             case let .noteDetail(.presented(.delegate(.noteUpdated(note)))):
                 state.notesList.notes[id: note.id] = note
@@ -222,7 +319,12 @@ public struct AppFeature: Sendable {
                 if case .completed(let note) = state.recording.postRecording, note.id == id {
                     state.recording.postRecording = nil
                 }
+                // Sync monthly count after deletion
+                state.recording.monthlyRecordingCount = state.monthlyRecordingCount
                 return .none
+
+            case .noteDetail(.presented(.delegate(.paywallRequested))):
+                return .send(.showPaywall)
 
             case .noteDetail:
                 return .none
@@ -231,12 +333,35 @@ public struct AppFeature: Sendable {
                 state.currentNote = nil
                 return .none
 
+            // MARK: - Settings
+
+            case .settings(.delegate(.paywallRequested)):
+                return .send(.showPaywall)
+
             case .settings:
                 return .none
             }
         }
         .ifLet(\.$currentNote, action: \.noteDetail) {
             NoteDetailFeature()
+        }
+        .ifLet(\.$paywall, action: \.paywall) {
+            SubscriptionFeature()
+        }
+    }
+
+    /// Syncs isPro and monthlyRecordingCount to child feature states.
+    private func syncIsProToChildren(_ state: inout State) {
+        let isPro = state.isPro
+        let monthlyCount = state.monthlyRecordingCount
+        let subscriptionStatus = state.subscriptionStatus
+        state.recording.isPro = isPro
+        state.recording.monthlyRecordingCount = monthlyCount
+        state.notesList.isPro = isPro
+        state.settings.isPro = isPro
+        state.settings.subscriptionStatus = subscriptionStatus
+        if state.currentNote != nil {
+            state.currentNote?.isPro = isPro
         }
     }
 }

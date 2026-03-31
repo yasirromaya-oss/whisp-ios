@@ -7,6 +7,8 @@ public struct SettingsFeature: Sendable {
     public struct State: Equatable, Sendable {
         public var autoExportReminders: Bool = false
         public var autoExportCalendar: Bool = false
+        public var isPro: Bool = false
+        public var subscriptionStatus: SubscriptionStatus = .unknown
         public init() {}
     }
 
@@ -16,6 +18,13 @@ public struct SettingsFeature: Sendable {
         case toggleAutoExportCalendar
         case requestRemindersPermission(Bool)
         case requestCalendarPermission(Bool)
+        case upgradeButtonTapped
+        case delegate(Delegate)
+
+        @CasePathable
+        public enum Delegate: Sendable {
+            case paywallRequested
+        }
     }
 
     @Dependency(\.userDefaults) var userDefaults
@@ -32,6 +41,10 @@ public struct SettingsFeature: Sendable {
                 return .none
 
             case .toggleAutoExportReminders:
+                // Free tier: auto-export requires Pro
+                if !state.isPro {
+                    return .send(.delegate(.paywallRequested))
+                }
                 state.autoExportReminders.toggle()
                 userDefaults.setBool(.autoExportReminders, state.autoExportReminders)
                 if state.autoExportReminders {
@@ -50,6 +63,10 @@ public struct SettingsFeature: Sendable {
                 return .none
 
             case .toggleAutoExportCalendar:
+                // Free tier: auto-export requires Pro
+                if !state.isPro {
+                    return .send(.delegate(.paywallRequested))
+                }
                 state.autoExportCalendar.toggle()
                 userDefaults.setBool(.autoExportCalendar, state.autoExportCalendar)
                 if state.autoExportCalendar {
@@ -67,6 +84,11 @@ public struct SettingsFeature: Sendable {
                 }
                 return .none
 
+            case .upgradeButtonTapped:
+                return .send(.delegate(.paywallRequested))
+
+            case .delegate:
+                return .none
             }
         }
     }

@@ -15,6 +15,8 @@
 		51ABAEC58E350E4B1ED98A30 /* TagEditorFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB3A27D8FCDB023A95CFAD83 /* TagEditorFeature.swift */; };
 		59DA834196647EBF36AA6AC6 /* OnboardingFeatureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D35427164CF5BE4985BB0E5 /* OnboardingFeatureTests.swift */; };
 		6963226C2EFF16BD86F4DF3B /* RootFeatureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DDBB086E0CFFC69C6498136 /* RootFeatureTests.swift */; };
+		6ADDE2BB8C5266FB5F9BD26B /* SubscriptionFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF1093C1E15967B76BE3DA42 /* SubscriptionFeature.swift */; };
+		7F49F4FB415C9148F147DFE1 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBAEC3852352A170E67C8754 /* PaywallView.swift */; };
 		87CC944A2F3A94C4002E63F1 /* wave animation.json in Resources */ = {isa = PBXBuildFile; fileRef = 87CC94492F3A94C4002E63F1 /* wave animation.json */; };
 		87D6E0682F316B8900871615 /* SettingsFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D6E0602F316B8900871615 /* SettingsFeature.swift */; };
 		87D6E06A2F316B8900871615 /* NoteDetailFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D6E0512F316B8900871615 /* NoteDetailFeature.swift */; };
@@ -32,6 +34,7 @@
 		87D6E0782F316B8900871615 /* NoteDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D6E0522F316B8900871615 /* NoteDetailView.swift */; };
 		87D6E0792F316B8900871615 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D6E05E2F316B8900871615 /* RootView.swift */; };
 		AD3CC1EEFC31BCD21CBD93E1 /* NotesListFeatureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9489101CD10E3015E49636B2 /* NotesListFeatureTests.swift */; };
+		B2C501B4DE9755565806743D /* SubscriptionFeatureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A727B76EB93339E641701EA4 /* SubscriptionFeatureTests.swift */; };
 		C3204E50BA1F683208ED4C7D /* SnapshotHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61D9B1A318053EF4D27848C9 /* SnapshotHelper.swift */; };
 		D4E5F6A7B8C9D0E1F2A3B4C6 /* NoteDetailFeatureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E5F6A7B8C9D0E1F2A3B4C5 /* NoteDetailFeatureTests.swift */; };
 		E86202DAF7D5F60C8727E753 /* DXWhispUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25B3793ED9E6DC776F5EB79A /* DXWhispUITests.swift */; };
@@ -91,9 +94,12 @@
 		9489101CD10E3015E49636B2 /* NotesListFeatureTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotesListFeatureTests.swift; sourceTree = "<group>"; };
 		95600DDA2ECD14D4235FB019 /* DXWhispUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DXWhispUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9867DDD10D545BE721872A2D /* SettingsFeatureTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsFeatureTests.swift; sourceTree = "<group>"; };
+		A727B76EB93339E641701EA4 /* SubscriptionFeatureTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SubscriptionFeatureTests.swift; sourceTree = "<group>"; };
+		AF1093C1E15967B76BE3DA42 /* SubscriptionFeature.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SubscriptionFeature.swift; sourceTree = "<group>"; };
 		B49506F5B7797CC00DC939DB /* DXWhispTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DXWhispTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB3A27D8FCDB023A95CFAD83 /* TagEditorFeature.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TagEditorFeature.swift; sourceTree = "<group>"; };
 		D4E5F6A7B8C9D0E1F2A3B4C5 /* NoteDetailFeatureTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NoteDetailFeatureTests.swift; sourceTree = "<group>"; };
+		DBAEC3852352A170E67C8754 /* PaywallView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
 		E9FDCA8BC362B27843028DCC /* AppFeatureTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppFeatureTests.swift; sourceTree = "<group>"; };
 		F100000129999999000042 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F100000129999999000043 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
@@ -130,6 +136,16 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0A7482AFFE737A38D98BB312 /* Subscription */ = {
+			isa = PBXGroup;
+			children = (
+				AF1093C1E15967B76BE3DA42 /* SubscriptionFeature.swift */,
+				DBAEC3852352A170E67C8754 /* PaywallView.swift */,
+			);
+			name = Subscription;
+			path = Subscription;
+			sourceTree = "<group>";
+		};
 		2A825323BA77E1C7CB247C47 /* DXWhispTests */ = {
 			isa = PBXGroup;
 			children = (
@@ -140,6 +156,7 @@
 				36603886374850A67DB14C3B /* RecordingFeatureTests.swift */,
 				9867DDD10D545BE721872A2D /* SettingsFeatureTests.swift */,
 				1DDBB086E0CFFC69C6498136 /* RootFeatureTests.swift */,
+				A727B76EB93339E641701EA4 /* SubscriptionFeatureTests.swift */,
 			);
 			path = DXWhispTests;
 			sourceTree = "<group>";
@@ -267,6 +284,7 @@
 				87D6E05C2F316B8900871615 /* Recording */,
 				87D6E0622F316B8900871615 /* Settings */,
 				7B92CA3F075B1E2890B79335 /* Localization */,
+				0A7482AFFE737A38D98BB312 /* Subscription */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -388,8 +406,8 @@
 			packageReferences = (
 				F10000012999999900009B /* XCRemoteSwiftPackageReference "swift-composable-architecture" */,
 				F10000012999999900009C /* XCRemoteSwiftPackageReference "swift-dependencies" */,
-				F10000012999999900009D /* XCLocalSwiftPackageReference "Packages/DXWhispKit" */,
-				F10000012999999900009E /* XCLocalSwiftPackageReference "Packages/DXWhispUI" */,
+				F10000012999999900009D /* XCLocalSwiftPackageReference "DXWhispKit" */,
+				F10000012999999900009E /* XCLocalSwiftPackageReference "DXWhispUI" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = D4E5F6A7B8C9D0E1F2A3B4C7 /* Products */;
@@ -452,6 +470,7 @@
 				492880731F74CD638AB4082A /* SettingsFeatureTests.swift in Sources */,
 				6963226C2EFF16BD86F4DF3B /* RootFeatureTests.swift in Sources */,
 				D4E5F6A7B8C9D0E1F2A3B4C6 /* NoteDetailFeatureTests.swift in Sources */,
+				B2C501B4DE9755565806743D /* SubscriptionFeatureTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -477,6 +496,8 @@
 				51ABAEC58E350E4B1ED98A30 /* TagEditorFeature.swift in Sources */,
 				5145BC56374D1EB0E1D2A420 /* TagEditorView.swift in Sources */,
 				4D4FAB3BF3D41600BE9220DE /* L10n.swift in Sources */,
+				6ADDE2BB8C5266FB5F9BD26B /* SubscriptionFeature.swift in Sources */,
+				7F49F4FB415C9148F147DFE1 /* PaywallView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -820,11 +841,11 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		F10000012999999900009D /* XCLocalSwiftPackageReference "Packages/DXWhispKit" */ = {
+		F10000012999999900009D /* XCLocalSwiftPackageReference "DXWhispKit" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/DXWhispKit;
 		};
-		F10000012999999900009E /* XCLocalSwiftPackageReference "Packages/DXWhispUI" */ = {
+		F10000012999999900009E /* XCLocalSwiftPackageReference "DXWhispUI" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/DXWhispUI;
 		};
@@ -862,12 +883,12 @@
 		};
 		F10000012999999900009F /* DXWhispKit */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = F10000012999999900009D /* XCLocalSwiftPackageReference "Packages/DXWhispKit" */;
+			package = F10000012999999900009D /* XCLocalSwiftPackageReference "DXWhispKit" */;
 			productName = DXWhispKit;
 		};
 		F1000001299999990000A0 /* DXWhispUI */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = F10000012999999900009E /* XCLocalSwiftPackageReference "Packages/DXWhispUI" */;
+			package = F10000012999999900009E /* XCLocalSwiftPackageReference "DXWhispUI" */;
 			productName = DXWhispUI;
 		};
 /* End XCSwiftPackageProductDependency section */

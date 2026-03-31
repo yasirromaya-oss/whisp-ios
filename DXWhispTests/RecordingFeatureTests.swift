@@ -174,4 +174,73 @@ struct RecordingFeatureTests {
         }
         await store.send(.recordButtonTapped)
     }
+
+    // MARK: - Subscription Gates
+
+    @Test func freeUserAtLimitShowsPaywall() async {
+        var state = RecordingFeature.State()
+        state.permissionGranted = true
+        state.isPro = false
+        state.monthlyRecordingCount = 3
+        let store = TestStore(initialState: state) {
+            RecordingFeature()
+        }
+        await store.send(.recordButtonTapped)
+        await store.receive(\.delegate.paywallRequested)
+    }
+
+    @Test func freeUserUnderLimitCanRecord() async {
+        var state = RecordingFeature.State()
+        state.permissionGranted = true
+        state.isPro = false
+        state.monthlyRecordingCount = 2
+        let clock = TestClock()
+        let store = TestStore(initialState: state) {
+            RecordingFeature()
+        } withDependencies: {
+            $0.audioRecorder.startRecording = {}
+            $0.audioRecorder.currentAudioLevel = { 0.5 }
+            $0.continuousClock = clock
+        }
+        await store.send(.recordButtonTapped) {
+            $0.recordingState = .recording(duration: 0)
+            $0.currentDuration = 0
+        }
+        await store.skipInFlightEffects()
+    }
+
+    @Test func proUserUnlimitedRecordings() async {
+        var state = RecordingFeature.State()
+        state.permissionGranted = true
+        state.isPro = true
+        state.monthlyRecordingCount = 100
+        let clock = TestClock()
+        let store = TestStore(initialState: state) {
+            RecordingFeature()
+        } withDependencies: {
+            $0.audioRecorder.startRecording = {}
+            $0.audioRecorder.currentAudioLevel = { 0.5 }
+            $0.continuousClock = clock
+        }
+        await store.send(.recordButtonTapped) {
+            $0.recordingState = .recording(duration: 0)
+            $0.currentDuration = 0
+        }
+        await store.skipInFlightEffects()
+    }
+
+    @Test func freeRecordingsRemainingComputation() {
+        var state = RecordingFeature.State()
+        state.monthlyRecordingCount = 0
+        #expect(state.freeRecordingsRemaining == 3)
+
+        state.monthlyRecordingCount = 2
+        #expect(state.freeRecordingsRemaining == 1)
+
+        state.monthlyRecordingCount = 3
+        #expect(state.freeRecordingsRemaining == 0)
+
+        state.monthlyRecordingCount = 10
+        #expect(state.freeRecordingsRemaining == 0)
+    }
 }

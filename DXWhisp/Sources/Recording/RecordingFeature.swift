@@ -18,6 +18,12 @@ public struct RecordingFeature: Sendable {
         public var permissionGranted: Bool?
         public var error: String?
         public var postRecording: PostRecordingState?
+        public var isPro: Bool = false
+        public var monthlyRecordingCount: Int = 0
+
+        public var freeRecordingsRemaining: Int {
+            max(0, 3 - monthlyRecordingCount)
+        }
 
         public init() {}
     }
@@ -37,6 +43,7 @@ public struct RecordingFeature: Sendable {
         public enum Delegate: Sendable {
             case recordingCompleted(URL, TimeInterval)
             case viewNote(VoiceNote)
+            case paywallRequested
         }
     }
 
@@ -68,6 +75,12 @@ public struct RecordingFeature: Sendable {
                         state.error = L10n.Recording.micRequired
                         return .none
                     }
+
+                    // Free tier: 3 recordings/month limit
+                    if !state.isPro && state.monthlyRecordingCount >= 3 {
+                        return .send(.delegate(.paywallRequested))
+                    }
+
                     state.postRecording = nil
                     state.recordingState = .recording(duration: 0)
                     state.currentDuration = 0

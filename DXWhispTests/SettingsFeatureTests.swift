@@ -38,7 +38,9 @@ struct SettingsFeatureTests {
 
     @Test func toggleAutoExportRemindersGranted() async {
         let persisted = LockIsolated<[UserDefaultsKey: Bool]>([:])
-        let store = TestStore(initialState: SettingsFeature.State()) {
+        var state = SettingsFeature.State()
+        state.isPro = true
+        let store = TestStore(initialState: state) {
             SettingsFeature()
         } withDependencies: {
             $0.userDefaults.setBool = { key, value in
@@ -55,7 +57,9 @@ struct SettingsFeatureTests {
 
     @Test func toggleAutoExportRemindersDeniedReverts() async {
         let persisted = LockIsolated<[UserDefaultsKey: Bool]>([:])
-        let store = TestStore(initialState: SettingsFeature.State()) {
+        var state = SettingsFeature.State()
+        state.isPro = true
+        let store = TestStore(initialState: state) {
             SettingsFeature()
         } withDependencies: {
             $0.userDefaults.setBool = { key, value in
@@ -73,7 +77,9 @@ struct SettingsFeatureTests {
 
     @Test func toggleAutoExportCalendarGranted() async {
         let persisted = LockIsolated<[UserDefaultsKey: Bool]>([:])
-        let store = TestStore(initialState: SettingsFeature.State()) {
+        var state = SettingsFeature.State()
+        state.isPro = true
+        let store = TestStore(initialState: state) {
             SettingsFeature()
         } withDependencies: {
             $0.userDefaults.setBool = { key, value in
@@ -90,7 +96,9 @@ struct SettingsFeatureTests {
 
     @Test func toggleAutoExportCalendarDeniedReverts() async {
         let persisted = LockIsolated<[UserDefaultsKey: Bool]>([:])
-        let store = TestStore(initialState: SettingsFeature.State()) {
+        var state = SettingsFeature.State()
+        state.isPro = true
+        let store = TestStore(initialState: state) {
             SettingsFeature()
         } withDependencies: {
             $0.userDefaults.setBool = { key, value in
@@ -106,4 +114,33 @@ struct SettingsFeatureTests {
         }
     }
 
+    // MARK: - Subscription Gates
+
+    @Test func upgradeButtonTappedSendsPaywallDelegate() async {
+        let store = TestStore(initialState: SettingsFeature.State()) {
+            SettingsFeature()
+        }
+        await store.send(.upgradeButtonTapped)
+        await store.receive(\.delegate.paywallRequested)
+    }
+
+    @Test func toggleAutoExportRemindersFreeTierShowsPaywall() async {
+        var state = SettingsFeature.State()
+        state.isPro = false
+        let store = TestStore(initialState: state) {
+            SettingsFeature()
+        }
+        await store.send(.toggleAutoExportReminders)
+        await store.receive(\.delegate.paywallRequested)
+    }
+
+    @Test func toggleAutoExportCalendarFreeTierShowsPaywall() async {
+        var state = SettingsFeature.State()
+        state.isPro = false
+        let store = TestStore(initialState: state) {
+            SettingsFeature()
+        }
+        await store.send(.toggleAutoExportCalendar)
+        await store.receive(\.delegate.paywallRequested)
+    }
 }

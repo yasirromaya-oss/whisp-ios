@@ -17,6 +17,7 @@ public struct NoteDetailFeature: Sendable {
         public var isEditingTranscript: Bool = false
         public var editedTranscriptText: String = ""
         public var isReExtractingInsights: Bool = false
+        public var isPro: Bool = false
 
         public init(note: VoiceNote) {
             self.note = note
@@ -61,6 +62,7 @@ public struct NoteDetailFeature: Sendable {
         public enum Delegate: Sendable {
             case noteUpdated(VoiceNote)
             case noteDeleted(UUID)
+            case paywallRequested
         }
     }
 
@@ -220,6 +222,9 @@ public struct NoteDetailFeature: Sendable {
                 state.errorMessage = nil
                 return .none
 
+            case .exportToReminders where !state.isPro:
+                return .send(.delegate(.paywallRequested))
+
             case var .exportToReminders(item):
                 let originalItem = item
                 item = ActionItem(
@@ -247,6 +252,9 @@ public struct NoteDetailFeature: Sendable {
                 updateActionItem(&state.note, originalItem)
                 state.errorMessage = L10n.NoteDetail.exportRemindersFailed
                 return .none
+
+            case .exportToCalendar where !state.isPro:
+                return .send(.delegate(.paywallRequested))
 
             case var .exportToCalendar(event):
                 let originalEvent = event
@@ -303,6 +311,10 @@ public struct NoteDetailFeature: Sendable {
                 return .none
 
             case .toggleLock:
+                // Free tier: locking requires Pro
+                if !state.isPro && !state.note.isLocked {
+                    return .send(.delegate(.paywallRequested))
+                }
                 state.note.isLocked.toggle()
                 if !state.note.isLocked {
                     state.isAuthenticated = true

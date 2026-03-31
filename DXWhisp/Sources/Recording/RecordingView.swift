@@ -79,6 +79,14 @@ public struct RecordingView: View {
                     .font(.footnote.weight(.regular))
                     .foregroundStyle(Theme.Colors.textTertiary)
                     .padding(.top, Theme.Spacing.xs)
+
+                if !store.isPro, store.recordingState == .idle, store.postRecording == nil {
+                    Text(L10n.Subscription.freeRecordingsRemaining(store.freeRecordingsRemaining))
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(store.freeRecordingsRemaining > 0 ? Theme.Colors.textTertiary : .orange)
+                        .padding(.top, Theme.Spacing.xs)
+                        .transition(.opacity)
+                }
             }
             .padding(.bottom, Theme.Spacing.xxxl)
         }
